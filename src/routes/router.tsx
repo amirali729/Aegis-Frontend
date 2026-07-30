@@ -39,18 +39,22 @@ const ApplicationsPage = lazy(
 const ApplicationDetailsPage = lazy(
   () => import("@/features/applications/pages/application-details-page"),
 );
-const OrganizationsPage = lazy(
-  () => import("@/features/organizations/pages/organizations-page")
-)
-const AuditLogsPage = lazy(
-  () => import('@/features/audit-logs/pages/audit-logs')
-)
-const RolesPage = lazy(
-  () => import('@/features/roles/pages/roles.page')
-)
+const RolesPage = lazy(() => import("@/features/roles/pages/roles-page"));
 const PermissionsPage = lazy(
-  () => import('@/features/permissions/pages/permission.page')
-)
+  () => import("@/features/permissions/pages/permissions-page"),
+);
+const OrganizationsPage = lazy(
+  () => import("@/features/organizations/pages/organizations-page"),
+);
+const OrganizationDetailsPage = lazy(
+  () => import("@/features/organizations/pages/organization-details-page"),
+);
+const AcceptInvitePage = lazy(
+  () => import("@/features/organizations/pages/accept-invite-page"),
+);
+const AuditLogsPage = lazy(
+  () => import("@/features/audit-logs/pages/audit-logs-page"),
+);
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -99,6 +103,10 @@ export const router = createBrowserRouter([
             path: ROUTES.verifyEmail,
             element: withSuspense(<VerifyEmailPage />),
           },
+          {
+            path: ROUTES.acceptInvite,
+            element: withSuspense(<AcceptInvitePage />),
+          },
         ],
       },
       {
@@ -123,15 +131,18 @@ export const router = createBrowserRouter([
                 path: "applications/:id",
                 element: withSuspense(<ApplicationDetailsPage />),
               },
-              { path: ROUTES.users, element: <ComingSoonPage title="Users" /> },
-              { path: ROUTES.roles, element: <RolesPage /> },
+              { path: ROUTES.roles, element: withSuspense(<RolesPage />) },
               {
                 path: ROUTES.permissions,
-                element: <PermissionsPage />,
+                element: withSuspense(<PermissionsPage />),
               },
               {
                 path: ROUTES.organizations,
-                element: <OrganizationsPage />,
+                element: withSuspense(<OrganizationsPage />),
+              },
+              {
+                path: "organizations/:id",
+                element: withSuspense(<OrganizationDetailsPage />),
               },
               {
                 path: ROUTES.sessions,
@@ -139,7 +150,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.auditLogs,
-                element: <AuditLogsPage />,
+                element: withSuspense(<AuditLogsPage />),
               },
               {
                 path: ROUTES.settings,

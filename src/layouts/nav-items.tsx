@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   AppWindow,
-  Users,
   ShieldCheck,
   KeyRound,
   Building2,
@@ -29,7 +28,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: AppWindow,
     permission: "application:view",
   },
-  { label: "Users", href: ROUTES.users, icon: Users, permission: "user:view" },
   {
     label: "Roles",
     href: ROUTES.roles,
