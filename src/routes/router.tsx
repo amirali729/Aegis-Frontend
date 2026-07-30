@@ -39,6 +39,18 @@ const ApplicationsPage = lazy(
 const ApplicationDetailsPage = lazy(
   () => import("@/features/applications/pages/application-details-page"),
 );
+const OrganizationsPage = lazy(
+  () => import("@/features/organizations/pages/organizations-page")
+)
+const AuditLogsPage = lazy(
+  () => import('@/features/audit-logs/pages/audit-logs')
+)
+const RolesPage = lazy(
+  () => import('@/features/roles/pages/roles.page')
+)
+const PermissionsPage = lazy(
+  () => import('@/features/permissions/pages/permission.page')
+)
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -112,14 +124,14 @@ export const router = createBrowserRouter([
                 element: withSuspense(<ApplicationDetailsPage />),
               },
               { path: ROUTES.users, element: <ComingSoonPage title="Users" /> },
-              { path: ROUTES.roles, element: <ComingSoonPage title="Roles" /> },
+              { path: ROUTES.roles, element: <RolesPage /> },
               {
                 path: ROUTES.permissions,
-                element: <ComingSoonPage title="Permissions" />,
+                element: <PermissionsPage />,
               },
               {
                 path: ROUTES.organizations,
-                element: <ComingSoonPage title="Organizations" />,
+                element: <OrganizationsPage />,
               },
               {
                 path: ROUTES.sessions,
@@ -127,7 +139,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.auditLogs,
-                element: <ComingSoonPage title="Audit Logs" />,
+                element: <AuditLogsPage />,
               },
               {
                 path: ROUTES.settings,
