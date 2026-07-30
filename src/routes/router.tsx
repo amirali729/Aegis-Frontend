@@ -26,9 +26,19 @@ const VerifyEmailPage = lazy(
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/dashboard-page"),
 );
-// const SessionsPage = lazy(
-//   () => import("@/features/sessions/pages/sessions-page"),
-// );
+const SessionsPage = lazy(
+  () => import("@/features/sessions/pages/sessions-page"),
+);
+const SettingsLayout = lazy(() => import("@/features/settings/settings-layout"));
+const LocalizationSettingsPage = lazy(
+  () => import("@/features/settings/pages/localization-settings-page"),
+);
+const ApplicationsPage = lazy(
+  () => import("@/features/applications/pages/applications-page"),
+);
+const ApplicationDetailsPage = lazy(
+  () => import("@/features/applications/pages/application-details-page"),
+);
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -95,7 +105,11 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.applications,
-                element: <ComingSoonPage title="Applications" />,
+                element: withSuspense(<ApplicationsPage />),
+              },
+              {
+                path: "applications/:id",
+                element: withSuspense(<ApplicationDetailsPage />),
               },
               { path: ROUTES.users, element: <ComingSoonPage title="Users" /> },
               { path: ROUTES.roles, element: <ComingSoonPage title="Roles" /> },
@@ -107,13 +121,9 @@ export const router = createBrowserRouter([
                 path: ROUTES.organizations,
                 element: <ComingSoonPage title="Organizations" />,
               },
-              // {
-              //   path: ROUTES.sessions,
-              //   element: withSuspense(<SessionsPage />),
-              // },
               {
-                  path: ROUTES.sessions,
-                  element: <ComingSoonPage title="sessions" />,
+                path: ROUTES.sessions,
+                element: withSuspense(<SessionsPage />),
               },
               {
                 path: ROUTES.auditLogs,
@@ -121,7 +131,29 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.settings,
-                element: <ComingSoonPage title="Settings" />,
+                element: withSuspense(<SettingsLayout />),
+                children: [
+                  {
+                    index: true,
+                    element: <Navigate to={ROUTES.settingsProfile} replace />,
+                  },
+                  {
+                    path: "profile",
+                    element: <ComingSoonPage title="Profile" />,
+                  },
+                  {
+                    path: "security",
+                    element: <ComingSoonPage title="Security" />,
+                  },
+                  {
+                    path: "localization",
+                    element: withSuspense(<LocalizationSettingsPage />),
+                  },
+                  {
+                    path: "organization",
+                    element: <ComingSoonPage title="Organization" />,
+                  },
+                ],
               },
               { path: ROUTES.forbidden, element: <ForbiddenPage /> },
             ],
