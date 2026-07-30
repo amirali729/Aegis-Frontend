@@ -26,9 +26,9 @@ const VerifyEmailPage = lazy(
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/dashboard-page"),
 );
-const SessionsPage = lazy(
-  () => import("@/features/sessions/pages/sessions-page"),
-);
+// const SessionsPage = lazy(
+//   () => import("@/features/sessions/pages/sessions-page"),
+// );
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -107,9 +107,13 @@ export const router = createBrowserRouter([
                 path: ROUTES.organizations,
                 element: <ComingSoonPage title="Organizations" />,
               },
+              // {
+              //   path: ROUTES.sessions,
+              //   element: withSuspense(<SessionsPage />),
+              // },
               {
-                path: ROUTES.sessions,
-                element: withSuspense(<SessionsPage />),
+                  path: ROUTES.sessions,
+                  element: <ComingSoonPage title="sessions" />,
               },
               {
                 path: ROUTES.auditLogs,
