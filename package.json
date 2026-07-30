@@ -26,6 +26,11 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky"
   },
+  "engines": {
+    "npm": "please-use-pnpm",
+    "yarn": "please-use-pnpm",
+    "bun": "please-use-pnpm"
+  },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/fira-code": "^5.2.6",
