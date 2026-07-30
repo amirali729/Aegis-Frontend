@@ -1,58 +1,78 @@
 import { z } from "zod";
 
-const urlListSchema = z
-  .string()
-  .transform((value) =>
-    value
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
-  )
-  .pipe(z.array(z.string().url("Each entry must be a valid URL.")));
+const urlListSchema = z.array(
+  z.string().url("Each entry must be a valid URL.")
+);
 
-const originListSchema = z
-  .string()
-  .transform((value) =>
-    value
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
-  )
-  .pipe(z.array(z.string().min(1)));
+const originListSchema = z.array(
+  z.string().url("Each entry must be a valid URL.")
+);
 
 export const createApplicationSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(2, "Name must be at least 2 characters.")
     .max(100, "Name must be at most 100 characters."),
+
   allowedOrigins: originListSchema,
+
   redirectUris: urlListSchema,
-  accessTokenTTL: z.string().min(1).default("15m"),
-  refreshTokenTTL: z.string().min(1).default("7d"),
+
+  accessTokenTTL: z
+    .string()
+    .trim()
+    .min(1, "Access token TTL is required."),
+
+  refreshTokenTTL: z
+    .string()
+    .trim()
+    .min(1, "Refresh token TTL is required."),
 });
-export type CreateApplicationFormValues = z.input<typeof createApplicationSchema>;
-export type CreateApplicationPayload = z.output<typeof createApplicationSchema>;
+
+export type CreateApplicationFormValues = z.infer<
+  typeof createApplicationSchema
+>;
+
+export type CreateApplicationPayload = z.infer<
+  typeof createApplicationSchema
+>;
 
 export const updateApplicationSchema = z.object({
-  name: z.string().min(2).max(100).optional(),
+  name: z.string().trim().min(2).max(100).optional(),
+
   allowedOrigins: originListSchema.optional(),
+
   redirectUris: urlListSchema.optional(),
-  accessTokenTTL: z.string().min(1).optional(),
-  refreshTokenTTL: z.string().min(1).optional(),
+
+  accessTokenTTL: z.string().trim().min(1).optional(),
+
+  refreshTokenTTL: z.string().trim().min(1).optional(),
+
   isActive: z.boolean().optional(),
 });
-export type UpdateApplicationFormValues = z.input<typeof updateApplicationSchema>;
+
+export type UpdateApplicationFormValues = z.infer<
+  typeof updateApplicationSchema
+>;
 
 export const createApiKeySchema = z.object({
   name: z
     .string()
+    .trim()
     .min(2, "Name must be at least 2 characters.")
     .max(100, "Name must be at most 100 characters."),
+
   expiresInDays: z
-    .number({ error: "Must be a number." })
+    .number({
+      error: "Must be a number.",
+    })
     .int()
     .min(1)
     .max(3650)
     .optional(),
 });
-export type CreateApiKeyFormValues = z.infer<typeof createApiKeySchema>;
+
+export type CreateApiKeyFormValues = z.infer<
+  typeof createApiKeySchema
+>;

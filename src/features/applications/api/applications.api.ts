@@ -3,7 +3,7 @@ import type {
   Application,
   CreateApplicationResponse,
 } from "@/features/applications/types/application.types";
-import type { CreateApplicationPayload } from "@/features/applications/schemas/application.schemas";
+import type { CreateApplicationFormValues } from "@/features/applications/schemas/application.schemas";
 
 export const applicationsApi = {
   list() {
@@ -14,11 +14,11 @@ export const applicationsApi = {
     return apiGet<Application>(`/applications/${id}`);
   },
 
-  create(body: CreateApplicationPayload) {
+  create(body: CreateApplicationFormValues) {
     return apiPost<CreateApplicationResponse>("/applications", body);
   },
 
-  update(id: string, body: Partial<CreateApplicationPayload & { isActive: boolean }>) {
+  update(id: string, body: Partial<CreateApplicationFormValues & { isActive: boolean }>) {
     return apiPatch<Application>(`/applications/${id}`, body);
   },
 

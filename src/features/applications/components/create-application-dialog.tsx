@@ -29,7 +29,6 @@ import {
 import {
   createApplicationSchema,
   type CreateApplicationFormValues,
-  type CreateApplicationPayload,
 } from "@/features/applications/schemas/application.schemas";
 import { useCreateApplication } from "@/features/applications/mutations/use-create-application";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
@@ -44,22 +43,18 @@ export function CreateApplicationDialog() {
   } | null>(null);
   const createApplication = useCreateApplication();
 
-  const form = useForm<
-    CreateApplicationFormValues,
-    unknown,
-    CreateApplicationPayload
-  >({
+  const form = useForm<CreateApplicationFormValues>({
     resolver: zodResolver(createApplicationSchema),
     defaultValues: {
       name: "",
-      allowedOrigins: "",
-      redirectUris: "",
+      allowedOrigins: [],
+      redirectUris: [],
       accessTokenTTL: "15m",
       refreshTokenTTL: "7d",
     },
   });
 
-  function onSubmit(values: CreateApplicationPayload) {
+  function onSubmit(values: CreateApplicationFormValues) {
     createApplication.mutate(values, {
       onSuccess: (data) => {
         setOpen(false);
@@ -130,7 +125,15 @@ export function CreateApplicationDialog() {
                     <FormControl>
                       <Textarea
                         placeholder={"https://app.example.com\nhttps://staging.example.com"}
-                        {...field}
+                        value={field.value.join("\n")}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean),
+                          )
+                        }
                       />
                     </FormControl>
                     <FormDescription>One origin per line.</FormDescription>
@@ -148,7 +151,15 @@ export function CreateApplicationDialog() {
                     <FormControl>
                       <Textarea
                         placeholder={"https://app.example.com/callback"}
-                        {...field}
+                        value={field.value.join("\n")}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean),
+                          )
+                        }
                       />
                     </FormControl>
                     <FormDescription>One URI per line.</FormDescription>

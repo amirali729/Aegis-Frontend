@@ -31,7 +31,6 @@ export const queryKeys = {
     apiKeys: (appId: string) => ["applications", appId, "api-keys"] as const,
   },
   auditLogs: {
-    list: (filters: Record<string, unknown>) =>
-      ["audit-logs", "list", filters] as const,
+    list: (filters: object) => ["audit-logs", "list", filters] as const,
   },
 } as const;

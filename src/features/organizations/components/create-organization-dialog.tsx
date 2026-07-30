@@ -129,7 +129,10 @@ export function CreateOrganizationDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Plan</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => value && field.onChange(value)}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />

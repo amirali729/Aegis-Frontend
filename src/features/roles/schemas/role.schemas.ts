@@ -6,7 +6,7 @@ export const createRoleSchema = z.object({
     .min(2, "Name must be at least 2 characters.")
     .max(50, "Name must be at most 50 characters."),
   description: z.string().max(500).optional(),
-  permissionIds: z.array(z.string()).default([]),
+  permissionIds: z.array(z.string()),
 });
 export type CreateRoleFormValues = z.infer<typeof createRoleSchema>;
 
