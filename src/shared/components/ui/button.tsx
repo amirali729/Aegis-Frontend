@@ -55,4 +55,5 @@ function Button({
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- shadcn pattern: cva variants are co-located with the component intentionally.
 export { Button, buttonVariants };

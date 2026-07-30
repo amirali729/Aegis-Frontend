@@ -14,7 +14,7 @@ export default defineConfig([
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
-      reactHooks.configs.flat.recommended,
+      reactHooks.configs["recommended-latest"],
       reactRefresh.configs.vite,
     ],
 
@@ -26,7 +26,8 @@ export default defineConfig([
       },
 
       parserOptions: {
-        project: true,
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
 
