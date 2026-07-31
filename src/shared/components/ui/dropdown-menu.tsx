@@ -56,9 +56,9 @@ function DropdownMenuItem({
 function DropdownMenuLabel({
   className,
   ...props
-}: ComponentProps<typeof MenuPrimitive.GroupLabel>) {
+}: ComponentProps<"div">) {
   return (
-    <MenuPrimitive.GroupLabel
+    <div
       data-slot="dropdown-menu-label"
       className={cn("px-2 py-1.5 text-xs font-medium text-muted-foreground", className)}
       {...props}
