@@ -20,38 +20,59 @@ export interface NavItem {
   permission?: string;
 }
 
-export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: ROUTES.dashboard, icon: LayoutDashboard },
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Applications",
-    href: ROUTES.applications,
-    icon: AppWindow,
-    permission: "application:view",
+    label: "Main",
+    items: [
+      { label: "Dashboard", href: ROUTES.dashboard, icon: LayoutDashboard },
+      {
+        label: "Applications",
+        href: ROUTES.applications,
+        icon: AppWindow,
+        permission: "application:view",
+      },
+      { label: "Sessions", href: ROUTES.sessions, icon: Monitor },
+    ],
   },
   {
-    label: "Roles",
-    href: ROUTES.roles,
-    icon: ShieldCheck,
-    permission: "role:view",
+    label: "Administration",
+    items: [
+      {
+        label: "Organizations",
+        href: ROUTES.organizations,
+        icon: Building2,
+        permission: "organization:view",
+      },
+      {
+        label: "Roles",
+        href: ROUTES.roles,
+        icon: ShieldCheck,
+        permission: "role:view",
+      },
+      {
+        label: "Permissions",
+        href: ROUTES.permissions,
+        icon: KeyRound,
+        permission: "permission:view",
+      },
+      {
+        label: "Audit Logs",
+        href: ROUTES.auditLogs,
+        icon: ScrollText,
+        permission: "audit:view",
+      },
+    ],
   },
   {
-    label: "Permissions",
-    href: ROUTES.permissions,
-    icon: KeyRound,
-    permission: "permission:view",
+    label: "Other",
+    items: [{ label: "Settings", href: ROUTES.settings, icon: Settings }],
   },
-  {
-    label: "Organizations",
-    href: ROUTES.organizations,
-    icon: Building2,
-    permission: "organization:view",
-  },
-  { label: "Sessions", href: ROUTES.sessions, icon: Monitor },
-  {
-    label: "Audit Logs",
-    href: ROUTES.auditLogs,
-    icon: ScrollText,
-    permission: "audit:view",
-  },
-  { label: "Settings", href: ROUTES.settings, icon: Settings },
 ];
+
+/** Flat list, kept for anything that needs every item regardless of grouping. */
+export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((group) => group.items);
