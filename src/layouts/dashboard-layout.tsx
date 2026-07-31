@@ -13,6 +13,11 @@ import { can } from "@/shared/permissions/can";
 export function DashboardLayout() {
   const { isCollapsed, toggle } = useSidebarStore();
   const user = useAuthStore((state) => state.user);
+// console.warn("===== USER =====");
+// console.warn(user);
+// console.warn("===== PERMISSIONS =====");
+// console.warn(user?.permissions);
+
   const logout = useLogout();
 
   return (
@@ -33,9 +38,7 @@ export function DashboardLayout() {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 p-2">
-          {NAV_ITEMS.filter(
-            (item) => !item.permission || can(user, item.permission),
-          ).map((item) => (
+          {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.href}
               to={item.href}
@@ -47,7 +50,7 @@ export function DashboardLayout() {
               }
             >
               <item.icon className="size-4 shrink-0" />
-              {!isCollapsed && <span className="truncate">{item.label}</span>}
+              {!isCollapsed && <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
