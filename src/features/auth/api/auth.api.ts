@@ -1,6 +1,7 @@
-import { apiPost } from "@/shared/api/request";
+import { apiGet, apiPost } from "@/shared/api/request";
 import type {
   LoginResponse,
+  Me,
   MessageResponse,
   RefreshResponse,
   SignupResponse,
@@ -18,7 +19,9 @@ export const authApi = {
   refresh() {
     return apiPost<RefreshResponse>("/auth/refresh");
   },
-
+  me() {
+    return apiGet<Me>("/auth/me")
+  },
   logout() {
     return apiPost<MessageResponse>("/auth/logout");
   },

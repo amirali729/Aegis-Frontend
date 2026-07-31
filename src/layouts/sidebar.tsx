@@ -11,6 +11,8 @@ import { can } from "@/shared/permissions/can";
 export function Sidebar() {
   const isCollapsed = useSidebarStore((state) => state.isCollapsed);
   const user = useAuthStore((state) => state.user);
+  console.warn(user?.permissions)
+  console.warn(user)
 
   return (
     <aside
@@ -30,7 +32,7 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
         {NAV_GROUPS.map((group) => {
           const items = group.items.filter(
             (item) => !item.permission || can(user, item.permission),
@@ -65,8 +67,8 @@ export function Sidebar() {
             </div>
           );
         })}
-      </nav> */}
-      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
+      </nav>
+      {/* <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
         {NAV_GROUPS.map((group) => {
           const items = group.items
 
@@ -98,7 +100,7 @@ export function Sidebar() {
             </div>
           );
         })}
-      </nav>
+      </nav> */}
     </aside>
   );
 }

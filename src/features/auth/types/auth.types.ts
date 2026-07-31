@@ -14,6 +14,11 @@ export interface LoginResponse {
   message: string;
 }
 
+export interface Me {
+  user: AuthUser;
+  permissions: string[];
+}
+
 export interface SignupResponse {
   user: Omit<AuthUser, "permissions">;
   message: string;
