@@ -11,10 +11,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (values: LoginFormValues) => authApi.login(values),
     onSuccess: (data) => {
-      // Roles/permissions aren't in the login response yet (see integration
-      // guide §4.1) — default to an empty list until a roles endpoint is
-      // wired up for the current user. UI permission checks degrade safely.
-      setAuthenticated({ ...data.user, permissions: [] });
+      setAuthenticated({ ...data.user, permissions: data.permissions });
       queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
   });

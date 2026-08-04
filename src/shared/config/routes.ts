@@ -29,6 +29,14 @@ export const ROUTES = {
   settingsLocalization: "/settings/localization",
   settingsOrganization: "/settings/organization",
 
+  // Developer
+  developerSdk: "/developer/sdk",
+  developerApiReference: "/developer/api-reference",
+  developerWebhooks: "/developer/webhooks",
+  developerOpenapi: "/developer/openapi",
+  developerPostman: "/developer/postman",
+  developerChangelog: "/developer/changelog",
+
   // Errors
   forbidden: "/403",
   notFound: "/404",

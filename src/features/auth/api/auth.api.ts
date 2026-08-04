@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from "@/shared/api/request";
 import type {
   LoginResponse,
-  Me,
+  MeResponse,
   MessageResponse,
   RefreshResponse,
   SignupResponse,
@@ -16,12 +16,15 @@ export const authApi = {
     return apiPost<SignupResponse>("/auth/signup", body);
   },
 
+  /** Re-fetches identity + fresh permissions. Call on app load and after joining/switching orgs. */
+  me() {
+    return apiGet<MeResponse>("/auth/me");
+  },
+
   refresh() {
     return apiPost<RefreshResponse>("/auth/refresh");
   },
-  me() {
-    return apiGet<Me>("/auth/me")
-  },
+
   logout() {
     return apiPost<MessageResponse>("/auth/logout");
   },

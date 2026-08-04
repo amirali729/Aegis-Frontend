@@ -8,6 +8,7 @@ import {
   ScrollText,
   Settings,
   Monitor,
+  Code2,
 } from "lucide-react";
 
 import { ROUTES } from "@/shared/config/routes";
@@ -71,6 +72,17 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Other",
     items: [{ label: "Settings", href: ROUTES.settings, icon: Settings }],
+  },
+  {
+    label: "Developer",
+    items: [
+      { label: "SDK", href: ROUTES.developerSdk, icon: Code2 },
+      { label: "API Reference", href: ROUTES.developerApiReference, icon: Code2 },
+      { label: "Webhooks", href: ROUTES.developerWebhooks, icon: Code2 },
+      { label: "OpenAPI", href: ROUTES.developerOpenapi, icon: Code2 },
+      { label: "Postman Collection", href: ROUTES.developerPostman, icon: Code2 },
+      { label: "Changelog", href: ROUTES.developerChangelog, icon: Code2 },
+    ],
   },
 ];
 
