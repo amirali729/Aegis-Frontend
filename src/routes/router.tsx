@@ -23,55 +23,45 @@ const ResetPasswordPage = lazy(
 const VerifyEmailPage = lazy(
   () => import("@/features/auth/pages/verify-email-page"),
 );
-
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/dashboard-page"),
 );
-
 const SessionsPage = lazy(
   () => import("@/features/sessions/pages/sessions-page"),
 );
-
-const SettingsLayout = lazy(
-  () => import("@/features/settings/settings-layout"),
-);
-
+const SettingsLayout = lazy(() => import("@/features/settings/settings-layout"));
 const LocalizationSettingsPage = lazy(
   () => import("@/features/settings/pages/localization-settings-page"),
 );
-
+const ProfileSettingsPage = lazy(
+  () => import("@/features/settings/pages/profile-settings-page"),
+);
+const SecuritySettingsPage = lazy(
+  () => import("@/features/settings/pages/security-settings-page"),
+);
 const ApplicationsPage = lazy(
   () => import("@/features/applications/pages/applications-page"),
 );
-
 const ApplicationDetailsPage = lazy(
   () => import("@/features/applications/pages/application-details-page"),
 );
-
-const RolesPage = lazy(
-  () => import("@/features/roles/pages/roles-page"),
-);
-
+const RolesPage = lazy(() => import("@/features/roles/pages/roles-page"));
 const PermissionsPage = lazy(
   () => import("@/features/permissions/pages/permissions-page"),
 );
-
 const OrganizationsPage = lazy(
   () => import("@/features/organizations/pages/organizations-page"),
 );
-
 const OrganizationDetailsPage = lazy(
-  () =>
-    import("@/features/organizations/pages/organization-details-page"),
+  () => import("@/features/organizations/pages/organization-details-page"),
 );
-
 const AcceptInvitePage = lazy(
   () => import("@/features/organizations/pages/accept-invite-page"),
 );
-
 const AuditLogsPage = lazy(
   () => import("@/features/audit-logs/pages/audit-logs-page"),
 );
+const SdkPage = lazy(() => import("@/features/developer/sdk/pages/sdk-page"));
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -91,23 +81,14 @@ export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      // -----------------------------
-      // Guest Routes
-      // -----------------------------
       {
         element: <GuestRoute />,
         children: [
           {
             element: <AuthLayout />,
             children: [
-              {
-                path: ROUTES.login,
-                element: withSuspense(<LoginPage />),
-              },
-              {
-                path: ROUTES.signup,
-                element: withSuspense(<SignupPage />),
-              },
+              { path: ROUTES.login, element: withSuspense(<LoginPage />) },
+              { path: ROUTES.signup, element: withSuspense(<SignupPage />) },
               {
                 path: ROUTES.forgotPassword,
                 element: withSuspense(<ForgotPasswordPage />),
@@ -116,11 +97,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
-
-      // -----------------------------
-      // Public Routes
-      // -----------------------------
       {
+        // Reachable regardless of auth status — a logged-in user clicking
+        // an old reset/verify link should still be able to complete the flow.
         element: <AuthLayout />,
         children: [
           {
@@ -137,10 +116,6 @@ export const router = createBrowserRouter([
           },
         ],
       },
-
-      // -----------------------------
-      // Protected Routes
-      // -----------------------------
       {
         element: <ProtectedRoute />,
         children: [
@@ -151,112 +126,95 @@ export const router = createBrowserRouter([
                 path: ROUTES.home,
                 element: <Navigate to={ROUTES.dashboard} replace />,
               },
-
               {
                 path: ROUTES.dashboard,
                 element: withSuspense(<DashboardPage />),
               },
-
-              // =====================
-              // Applications
-              // =====================
               {
                 path: ROUTES.applications,
-                children: [
-                  {
-                    index: true,
-                    element: withSuspense(<ApplicationsPage />),
-                  },
-                  {
-                    path: ":id",
-                    element: withSuspense(<ApplicationDetailsPage />),
-                  },
-                ],
+                element: withSuspense(<ApplicationsPage />),
               },
-
-              // =====================
-              // Organizations
-              // =====================
               {
-                path: ROUTES.organizations,
-                children: [
-                  {
-                    index: true,
-                    element: withSuspense(<OrganizationsPage />),
-                  },
-                  {
-                    path: ":id",
-                    element: withSuspense(<OrganizationDetailsPage />),
-                  },
-                ],
+                path: "applications/:id",
+                element: withSuspense(<ApplicationDetailsPage />),
               },
-
-              {
-                path: ROUTES.roles,
-                element: withSuspense(<RolesPage />),
-              },
-
+              { path: ROUTES.roles, element: withSuspense(<RolesPage />) },
               {
                 path: ROUTES.permissions,
                 element: withSuspense(<PermissionsPage />),
               },
-
+              {
+                path: ROUTES.organizations,
+                element: withSuspense(<OrganizationsPage />),
+              },
+              {
+                path: "organizations/:id",
+                element: withSuspense(<OrganizationDetailsPage />),
+              },
               {
                 path: ROUTES.sessions,
                 element: withSuspense(<SessionsPage />),
               },
-
               {
                 path: ROUTES.auditLogs,
                 element: withSuspense(<AuditLogsPage />),
               },
-
-              // =====================
-              // Settings
-              // =====================
               {
                 path: ROUTES.settings,
                 element: withSuspense(<SettingsLayout />),
                 children: [
                   {
                     index: true,
-                    element: (
-                      <Navigate
-                        to={ROUTES.settingsProfile}
-                        replace
-                      />
-                    ),
+                    element: <Navigate to={ROUTES.settingsProfile} replace />,
                   },
                   {
                     path: "profile",
-                    element: <ComingSoonPage title="Profile" />,
+                    element: withSuspense(<ProfileSettingsPage />),
                   },
                   {
                     path: "security",
-                    element: <ComingSoonPage title="Security" />,
+                    element: withSuspense(<SecuritySettingsPage />),
                   },
                   {
                     path: "localization",
-                    element: withSuspense(
-                      <LocalizationSettingsPage />,
-                    ),
+                    element: withSuspense(<LocalizationSettingsPage />),
+                  },
+                  {
+                    path: "organization",
+                    element: <ComingSoonPage title="Organization" />,
                   },
                 ],
               },
-
+              { path: ROUTES.forbidden, element: <ForbiddenPage /> },
               {
-                path: ROUTES.forbidden,
-                element: <ForbiddenPage />,
+                path: ROUTES.developerSdk,
+                element: withSuspense(<SdkPage />),
+              },
+              {
+                path: ROUTES.developerApiReference,
+                element: <ComingSoonPage title="API Reference" />,
+              },
+              {
+                path: ROUTES.developerWebhooks,
+                element: <ComingSoonPage title="Webhooks" />,
+              },
+              {
+                path: ROUTES.developerOpenapi,
+                element: <ComingSoonPage title="OpenAPI" />,
+              },
+              {
+                path: ROUTES.developerPostman,
+                element: <ComingSoonPage title="Postman Collection" />,
+              },
+              {
+                path: ROUTES.developerChangelog,
+                element: <ComingSoonPage title="Changelog" />,
               },
             ],
           },
         ],
       },
-
-      {
-        path: "*",
-        element: <NotFoundPage />,
-      },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
