@@ -13,7 +13,7 @@ import NotFoundPage from "@/routes/not-found-page";
 import ForbiddenPage from "@/routes/forbidden-page";
 
 const LoginPage = lazy(() => import("@/features/auth/pages/login-page"));
-const SignupPage = lazy(() => import("@/features/auth/pages/signup-page"));
+const LandingPage = lazy(() => import("@/features/landing/pages/landing-page"));const SignupPage = lazy(() => import("@/features/auth/pages/signup-page"));
 const ForgotPasswordPage = lazy(
   () => import("@/features/auth/pages/forgot-password-page"),
 );
@@ -30,14 +30,38 @@ const SessionsPage = lazy(
   () => import("@/features/sessions/pages/sessions-page"),
 );
 const SettingsLayout = lazy(() => import("@/features/settings/settings-layout"));
-const LocalizationSettingsPage = lazy(
-  () => import("@/features/settings/pages/localization-settings-page"),
-);
 const ProfileSettingsPage = lazy(
   () => import("@/features/settings/pages/profile-settings-page"),
 );
+const GeneralSettingsPage = lazy(
+  () => import("@/features/settings/pages/general-settings-page"),
+);
 const SecuritySettingsPage = lazy(
   () => import("@/features/settings/pages/security-settings-page"),
+);
+const NotificationsSettingsPage = lazy(
+  () => import("@/features/settings/pages/notifications-settings-page"),
+);
+const AppearanceSettingsPage = lazy(
+  () => import("@/features/settings/pages/appearance-settings-page"),
+);
+const BillingSettingsPage = lazy(
+  () => import("@/features/settings/pages/billing-settings-page"),
+);
+const AuditLogsSettingsPage = lazy(
+  () => import("@/features/settings/pages/audit-logs-settings-page"),
+);
+const DataPrivacySettingsPage = lazy(
+  () => import("@/features/settings/pages/data-privacy-settings-page"),
+);
+const IntegrationsSettingsPage = lazy(
+  () => import("@/features/settings/pages/integrations-settings-page"),
+);
+const DeveloperSettingsPage = lazy(
+  () => import("@/features/settings/pages/developer-settings-page"),
+);
+const DangerZoneSettingsPage = lazy(
+  () => import("@/features/settings/pages/danger-zone-settings-page"),
 );
 const ApplicationsPage = lazy(
   () => import("@/features/applications/pages/applications-page"),
@@ -82,6 +106,12 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
+        // Public marketing home — reachable regardless of auth status,
+        // its own navbar adapts the CTA if the visitor is signed in.
+        path: ROUTES.home,
+        element: withSuspense(<LandingPage />),
+      },
+      {
         element: <GuestRoute />,
         children: [
           {
@@ -122,10 +152,6 @@ export const router = createBrowserRouter([
           {
             element: <DashboardLayout />,
             children: [
-              {
-                path: ROUTES.home,
-                element: <Navigate to={ROUTES.dashboard} replace />,
-              },
               {
                 path: ROUTES.dashboard,
                 element: withSuspense(<DashboardPage />),
@@ -172,16 +198,53 @@ export const router = createBrowserRouter([
                     element: withSuspense(<ProfileSettingsPage />),
                   },
                   {
+                    path: "general",
+                    element: withSuspense(<GeneralSettingsPage />),
+                  },
+                  {
                     path: "security",
                     element: withSuspense(<SecuritySettingsPage />),
                   },
                   {
+                    path: "notifications",
+                    element: withSuspense(<NotificationsSettingsPage />),
+                  },
+                  {
+                    path: "appearance",
+                    element: withSuspense(<AppearanceSettingsPage />),
+                  },
+                  {
+                    path: "billing",
+                    element: withSuspense(<BillingSettingsPage />),
+                  },
+                  {
+                    path: "audit-logs",
+                    element: withSuspense(<AuditLogsSettingsPage />),
+                  },
+                  {
+                    path: "data-privacy",
+                    element: withSuspense(<DataPrivacySettingsPage />),
+                  },
+                  {
+                    path: "integrations",
+                    element: withSuspense(<IntegrationsSettingsPage />),
+                  },
+                  {
+                    path: "developer",
+                    element: withSuspense(<DeveloperSettingsPage />),
+                  },
+                  {
+                    path: "danger",
+                    element: withSuspense(<DangerZoneSettingsPage />),
+                  },
+                  // Legacy aliases from the previous nav structure.
+                  {
                     path: "localization",
-                    element: withSuspense(<LocalizationSettingsPage />),
+                    element: <Navigate to={ROUTES.settingsAppearance} replace />,
                   },
                   {
                     path: "organization",
-                    element: <ComingSoonPage title="Organization" />,
+                    element: <Navigate to={ROUTES.settingsGeneral} replace />,
                   },
                 ],
               },
