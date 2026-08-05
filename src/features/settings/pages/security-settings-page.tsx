@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Monitor } from "lucide-react";
+import { Fingerprint, Monitor } from "lucide-react";
 
 import {
   Card,
@@ -27,15 +27,19 @@ import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from "@/features/auth/schemas/auth.schemas";
+import { Switch } from "@/shared/components/ui/switch";
 import { useChangePassword } from "@/features/auth/mutations/use-change-password";
 import { useLogoutAll } from "@/features/auth/mutations/use-logout";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { toast } from "@/shared/lib/toast";
 import { ROUTES } from "@/shared/config/routes";
+import { useProfilePreferencesStore } from "@/features/settings/store/profile-preferences";
 
 export default function SecuritySettingsPage() {
   const changePassword = useChangePassword();
   const logoutAll = useLogoutAll();
+  const { twoFactorEnabled, setTwoFactorEnabled, markPasswordChanged } =
+    useProfilePreferencesStore();
 
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -46,6 +50,7 @@ export default function SecuritySettingsPage() {
     changePassword.mutate(values, {
       onSuccess: () => {
         toast.success("Password changed.");
+        markPasswordChanged();
         form.reset();
       },
     });
@@ -123,6 +128,31 @@ export default function SecuritySettingsPage() {
               </Button>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Two-Factor Authentication</CardTitle>
+          <CardDescription>
+            Add an extra layer of security to your account when signing in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
+            <div className="flex items-center gap-3">
+              <Fingerprint className="size-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Authenticator app</p>
+                <p className="text-xs text-muted-foreground">
+                  {twoFactorEnabled
+                    ? "Enabled for this account."
+                    : "Not yet enforced by the backend — this only reflects locally."}
+                </p>
+              </div>
+            </div>
+            <Switch checked={twoFactorEnabled} onCheckedChange={setTwoFactorEnabled} />
+          </div>
         </CardContent>
       </Card>
 
