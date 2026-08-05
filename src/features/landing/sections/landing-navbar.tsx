@@ -83,7 +83,7 @@ export function LandingNavbar() {
             size="icon"
             render={
               <a
-                href="https://github.com"
+                href="https://github.com/amirali729/Aegis"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Aegis on GitHub"
