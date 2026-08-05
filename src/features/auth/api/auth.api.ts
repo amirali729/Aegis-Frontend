@@ -1,6 +1,7 @@
-import { apiPost } from "@/shared/api/request";
+import { apiGet, apiPost } from "@/shared/api/request";
 import type {
   LoginResponse,
+  MeResponse,
   MessageResponse,
   RefreshResponse,
   SignupResponse,
@@ -13,6 +14,11 @@ export const authApi = {
 
   signup(body: { username: string; email: string; password: string }) {
     return apiPost<SignupResponse>("/auth/signup", body);
+  },
+
+  /** Re-fetches identity + fresh permissions. Call on app load and after joining/switching orgs. */
+  me() {
+    return apiGet<MeResponse>("/auth/me");
   },
 
   refresh() {

@@ -25,9 +25,27 @@ export const ROUTES = {
   auditLogs: "/audit-logs",
   settings: "/settings",
   settingsProfile: "/settings/profile",
+  settingsGeneral: "/settings/general",
   settingsSecurity: "/settings/security",
+  settingsNotifications: "/settings/notifications",
+  settingsAppearance: "/settings/appearance",
+  settingsBilling: "/settings/billing",
+  settingsAuditLogs: "/settings/audit-logs",
+  settingsDataPrivacy: "/settings/data-privacy",
+  settingsIntegrations: "/settings/integrations",
+  settingsDeveloper: "/settings/developer",
+  settingsDanger: "/settings/danger",
+  // Legacy aliases, redirected in the router — kept so old links don't 404.
   settingsLocalization: "/settings/localization",
   settingsOrganization: "/settings/organization",
+
+  // Developer
+  developerSdk: "/developer/sdk",
+  developerApiReference: "/developer/api-reference",
+  developerWebhooks: "/developer/webhooks",
+  developerOpenapi: "/developer/openapi",
+  developerPostman: "/developer/postman",
+  developerChangelog: "/developer/changelog",
 
   // Errors
   forbidden: "/403",

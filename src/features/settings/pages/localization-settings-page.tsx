@@ -48,7 +48,10 @@ export default function LocalizationSettingsPage() {
         <CardContent className="flex flex-col gap-4 sm:max-w-sm">
           <div className="grid gap-2">
             <Label>Timezone</Label>
-            <Select value={timezone} onValueChange={setTimezone}>
+            <Select
+              value={timezone}
+              onValueChange={(value) => value && setTimezone(value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -64,7 +67,10 @@ export default function LocalizationSettingsPage() {
 
           <div className="grid gap-2">
             <Label>Locale</Label>
-            <Select value={locale} onValueChange={setLocale}>
+            <Select
+              value={locale}
+              onValueChange={(value) => value && setLocale(value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

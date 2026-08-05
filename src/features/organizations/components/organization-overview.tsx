@@ -24,6 +24,7 @@ export function OrganizationOverview({ organization }: { organization: Organizat
         <Select
           value={organization.status}
           onValueChange={(status) =>
+            status &&
             updateOrganization.mutate({ status: status as "active" | "suspended" })
           }
         >
@@ -47,6 +48,7 @@ export function OrganizationOverview({ organization }: { organization: Organizat
         <Select
           value={organization.plan}
           onValueChange={(plan) =>
+            plan &&
             updateOrganization.mutate({
               plan: plan as "free" | "pro" | "enterprise",
             })

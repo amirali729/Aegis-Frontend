@@ -11,7 +11,13 @@ export interface LoginResponse {
   user: AuthUser;
   accessToken: string;
   refreshToken: string;
+  permissions: string[];
   message: string;
+}
+
+export interface MeResponse {
+  user: Omit<AuthUser, "permissions">;
+  permissions: string[];
 }
 
 export interface SignupResponse {

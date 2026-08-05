@@ -33,6 +33,12 @@ const SettingsLayout = lazy(() => import("@/features/settings/settings-layout"))
 const LocalizationSettingsPage = lazy(
   () => import("@/features/settings/pages/localization-settings-page"),
 );
+const ProfileSettingsPage = lazy(
+  () => import("@/features/settings/pages/profile-settings-page"),
+);
+const SecuritySettingsPage = lazy(
+  () => import("@/features/settings/pages/security-settings-page"),
+);
 const ApplicationsPage = lazy(
   () => import("@/features/applications/pages/applications-page"),
 );
@@ -55,6 +61,7 @@ const AcceptInvitePage = lazy(
 const AuditLogsPage = lazy(
   () => import("@/features/audit-logs/pages/audit-logs-page"),
 );
+const SdkPage = lazy(() => import("@/features/developer/sdk/pages/sdk-page"));
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -162,11 +169,11 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: "profile",
-                    element: <ComingSoonPage title="Profile" />,
+                    element: withSuspense(<ProfileSettingsPage />),
                   },
                   {
                     path: "security",
-                    element: <ComingSoonPage title="Security" />,
+                    element: withSuspense(<SecuritySettingsPage />),
                   },
                   {
                     path: "localization",
@@ -179,6 +186,30 @@ export const router = createBrowserRouter([
                 ],
               },
               { path: ROUTES.forbidden, element: <ForbiddenPage /> },
+              {
+                path: ROUTES.developerSdk,
+                element: withSuspense(<SdkPage />),
+              },
+              {
+                path: ROUTES.developerApiReference,
+                element: <ComingSoonPage title="API Reference" />,
+              },
+              {
+                path: ROUTES.developerWebhooks,
+                element: <ComingSoonPage title="Webhooks" />,
+              },
+              {
+                path: ROUTES.developerOpenapi,
+                element: <ComingSoonPage title="OpenAPI" />,
+              },
+              {
+                path: ROUTES.developerPostman,
+                element: <ComingSoonPage title="Postman Collection" />,
+              },
+              {
+                path: ROUTES.developerChangelog,
+                element: <ComingSoonPage title="Changelog" />,
+              },
             ],
           },
         ],
