@@ -26,6 +26,7 @@ import { useLogin } from "@/features/auth/mutations/use-login";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { ApiError } from "@/shared/errors/api-error";
 import { ROUTES } from "@/shared/config/routes";
+import { parseOAuthAuthorizeParams, oauthAuthorizeUrl } from "@/shared/auth/oauth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -37,12 +38,25 @@ export default function LoginPage() {
     defaultValues: { username: "", password: "" },
   });
 
+  // If the backend's GET /oauth/authorize bounced an unauthenticated
+  // visitor here, its original query params are preserved on our own
+  // URL. Detect that and, once logged in, send the full page back to
+  // the backend's authorize endpoint (not an SPA route) so it can
+  // re-evaluate the request now that the session cookie is set.
+  const oauthParams = parseOAuthAuthorizeParams(location.search);
+
   const redirectTo =
     (location.state as { from?: string } | null)?.from ?? ROUTES.dashboard;
 
   function onSubmit(values: LoginFormValues) {
     login.mutate(values, {
-      onSuccess: () => navigate(redirectTo, { replace: true }),
+      onSuccess: () => {
+        if (oauthParams) {
+          window.location.href = oauthAuthorizeUrl(location.search);
+          return;
+        }
+        navigate(redirectTo, { replace: true });
+      },
     });
   }
 
@@ -54,7 +68,9 @@ export default function LoginPage() {
       <CardHeader>
         <CardTitle className="text-xl">Sign in</CardTitle>
         <CardDescription>
-          Enter your username and password to access your account.
+          {oauthParams
+            ? "Sign in to continue — you'll be redirected back automatically."
+            : "Enter your username and password to access your account."}
         </CardDescription>
       </CardHeader>
       <CardContent>

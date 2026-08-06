@@ -32,10 +32,16 @@ import {
 } from "@/features/applications/mutations/use-application-actions";
 import { CreateApiKeyDialog } from "@/features/applications/components/create-api-key-dialog";
 import { ApiKeysSection } from "@/features/applications/components/api-keys-section";
+import { CreateOAuthClientDialog } from "@/features/applications/components/create-oauth-client-dialog";
+import { OAuthClientsSection } from "@/features/applications/components/oauth-clients-section";
 import { ApplicationActivity } from "@/features/applications/components/application-activity";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import { can } from "@/shared/permissions/can";
 
 export default function ApplicationDetailsPage() {
   const { id } = useParams<{ id: string }>();
+  const user = useAuthStore((state) => state.user);
+  const canViewOAuthClients = can(user, "oauth_client:view");
   const applicationQuery = useApplication(id ?? "");
   const apiKeysQuery = useApiKeys(id ?? "");
   const updateApplication = useUpdateApplication(id ?? "");
@@ -126,6 +132,9 @@ export default function ApplicationDetailsPage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="api-keys">API keys</TabsTrigger>
+          {canViewOAuthClients && (
+            <TabsTrigger value="oauth-clients">OAuth clients</TabsTrigger>
+          )}
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
@@ -199,6 +208,26 @@ export default function ApplicationDetailsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {canViewOAuthClients && (
+          <TabsContent value="oauth-clients">
+            <Card>
+              <CardHeader className="flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardTitle>OAuth clients</CardTitle>
+                  <CardDescription>
+                    Let third-party apps authenticate users through Aegis via
+                    OAuth 2.1 / OIDC.
+                  </CardDescription>
+                </div>
+                <CreateOAuthClientDialog applicationId={application.id} />
+              </CardHeader>
+              <CardContent>
+                <OAuthClientsSection applicationId={application.id} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="activity">
           <Card>
