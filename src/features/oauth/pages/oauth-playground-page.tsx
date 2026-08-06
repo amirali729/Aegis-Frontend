@@ -23,7 +23,7 @@ import {
   generateCodeVerifier,
   generateState,
 } from "@/shared/auth/pkce";
-import { buildAuthorizeUrl } from "@/shared/auth/oauth";
+import { buildAuthorizeUrl } from "@/shared/auth/o-auth";
 import { ROUTES } from "@/shared/config/routes";
 import {
   oauthPlaygroundApi,

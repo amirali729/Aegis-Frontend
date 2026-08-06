@@ -1,5 +1,5 @@
 import { apiPost } from "@/shared/api/request";
-import type { OAuthAuthorizeParams } from "@/shared/auth/oauth";
+import type { OAuthAuthorizeParams } from "@/shared/auth/o-auth";
 
 /**
  * The Integration Guide documents this as a normal enveloped JSON

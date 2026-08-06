@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { appConfig } from "@/shared/config/app";
 import { useAuthStore } from "@/features/auth/store/auth-store";
-import { parseOAuthAuthorizeParams } from "@/shared/auth/oauth";
+import { parseOAuthAuthorizeParams } from "@/shared/auth/o-auth";
 import { oauthApi } from "@/features/oauth/api/oauth.api";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 

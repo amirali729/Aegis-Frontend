@@ -26,7 +26,7 @@ import { useLogin } from "@/features/auth/mutations/use-login";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { ApiError } from "@/shared/errors/api-error";
 import { ROUTES } from "@/shared/config/routes";
-import { parseOAuthAuthorizeParams, oauthAuthorizeUrl } from "@/shared/auth/oauth";
+import { parseOAuthAuthorizeParams, oauthAuthorizeUrl } from "@/shared/auth/o-auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
