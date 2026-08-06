@@ -3,9 +3,10 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 interface OutcomeDonutProps {
   data: { name: string; value: number; color: string }[];
   total: number;
+  unitLabel?: string;
 }
 
-export function OutcomeDonut({ data, total }: OutcomeDonutProps) {
+export function OutcomeDonut({ data, total, unitLabel = "events" }: OutcomeDonutProps) {
   return (
     <div className="flex items-center gap-4">
       <div className="relative shrink-0">
@@ -28,7 +29,7 @@ export function OutcomeDonut({ data, total }: OutcomeDonutProps) {
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-lg font-semibold tabular-nums">{total}</span>
-          <span className="text-[11px] text-muted-foreground">events</span>
+          <span className="text-[11px] text-muted-foreground">{unitLabel}</span>
         </div>
       </div>
 

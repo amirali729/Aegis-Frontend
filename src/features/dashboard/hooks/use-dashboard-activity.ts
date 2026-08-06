@@ -5,8 +5,8 @@ import { useAuditLogs } from "@/features/audit-logs/queries/use-audit-logs";
 
 const DAYS = 7;
 
-export function useDashboardActivity() {
-  const auditLogsQuery = useAuditLogs({ page: 1, limit: 100 });
+export function useDashboardActivity(enabled = true) {
+  const auditLogsQuery = useAuditLogs({ page: 1, limit: 100 }, enabled);
 
   const derived = useMemo(() => {
     const logs = auditLogsQuery.data?.logs ?? [];
@@ -41,6 +41,7 @@ export function useDashboardActivity() {
 
   return {
     ...derived,
+    total: auditLogsQuery.data?.total,
     isPending: auditLogsQuery.isPending,
     isError: auditLogsQuery.isError,
     error: auditLogsQuery.error,

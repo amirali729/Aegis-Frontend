@@ -5,10 +5,11 @@ import { membersApi } from "@/features/organizations/api/members.api";
 import { invitationsApi } from "@/features/organizations/api/invitations.api";
 import { queryKeys } from "@/shared/query/query-keys";
 
-export function useOrganizations() {
+export function useOrganizations(enabled = true) {
   return useQuery({
     queryKey: queryKeys.organizations.list,
     queryFn: () => organizationsApi.list(),
+    enabled,
   });
 }
 

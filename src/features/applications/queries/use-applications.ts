@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { applicationsApi } from "@/features/applications/api/applications.api";
 import { queryKeys } from "@/shared/query/query-keys";
 
-export function useApplications() {
+export function useApplications(enabled = true) {
   return useQuery({
     queryKey: queryKeys.applications.list,
     queryFn: () => applicationsApi.list(),
+    enabled,
   });
 }
 

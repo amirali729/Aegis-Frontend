@@ -5,10 +5,11 @@ import { auditLogsApi } from "@/features/audit-logs/api/audit-logs.api";
 import { queryKeys } from "@/shared/query/query-keys";
 import type { AuditLogFilters } from "@/features/audit-logs/types/audit-log.types";
 
-export function useAuditLogs(filters: AuditLogFilters) {
+export function useAuditLogs(filters: AuditLogFilters, enabled = true) {
   return useQuery({
     queryKey: queryKeys.auditLogs.list(filters),
     queryFn: () => auditLogsApi.list(filters),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
