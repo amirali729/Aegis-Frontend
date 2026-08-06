@@ -78,6 +78,11 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "SDK", href: ROUTES.developerSdk, icon: Code2 },
       { label: "API Reference", href: ROUTES.developerApiReference, icon: Code2 },
+      {
+        label: "OAuth Playground",
+        href: ROUTES.developerOAuthPlayground,
+        icon: KeyRound,
+      },
       { label: "Webhooks", href: ROUTES.developerWebhooks, icon: Code2 },
       { label: "OpenAPI", href: ROUTES.developerOpenapi, icon: Code2 },
       { label: "Postman Collection", href: ROUTES.developerPostman, icon: Code2 },

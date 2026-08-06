@@ -89,6 +89,31 @@ httpClient.interceptors.response.use(
 
     const { status, data } = error.response;
 
+    // /oauth/token, /oauth/revoke, /oauth/introspect are the three
+    // documented exceptions to the standard {success, message, ...}
+    // envelope — on failure they return RFC 6749-shaped
+    // {error, error_description} instead of {message}.
+    const isRawOAuthEndpoint = Boolean(
+      originalRequest?.url?.startsWith("/oauth/token") ||
+        originalRequest?.url?.startsWith("/oauth/revoke") ||
+        originalRequest?.url?.startsWith("/oauth/introspect"),
+    );
+    if (isRawOAuthEndpoint) {
+      const oauthData = data as unknown as
+        | { error?: string; error_description?: string }
+        | undefined;
+      return Promise.reject(
+        new ApiError({
+          message:
+            oauthData?.error_description ??
+            oauthData?.error ??
+            error.message ??
+            "The OAuth request failed.",
+          statusCode: status,
+        }),
+      );
+    }
+
     const shouldAttemptRefresh =
       status === 401 &&
       originalRequest &&

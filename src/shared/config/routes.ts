@@ -11,6 +11,7 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   verifyEmail: "/verify-email",
   acceptInvite: "/accept-invite",
+  oauthConsent: "/oauth/consent",
 
   // Protected
   dashboard: "/dashboard",
@@ -46,6 +47,8 @@ export const ROUTES = {
   developerOpenapi: "/developer/openapi",
   developerPostman: "/developer/postman",
   developerChangelog: "/developer/changelog",
+  developerOAuthPlayground: "/developer/oauth-playground",
+  developerOAuthPlaygroundCallback: "/developer/oauth-playground/callback",
 
   // Errors
   forbidden: "/403",
