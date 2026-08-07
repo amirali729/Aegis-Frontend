@@ -44,6 +44,22 @@ export function CreateApplicationDialog() {
   } | null>(null);
   const createApplication = useCreateApplication();
 
+  // The schema stores these as `string[]`, but they're edited as
+  // free-form, newline-separated text. Keeping the raw text in local
+  // state (rather than deriving it from `field.value.join("\n")` on
+  // every render) lets someone press Enter to start a new line without
+  // an in-progress blank line being immediately stripped by the
+  // trim/filter step that turns the text into the array RHF/zod expect.
+  const [allowedOriginsText, setAllowedOriginsText] = useState("");
+  const [redirectUrisText, setRedirectUrisText] = useState("");
+
+  function linesToArray(text: string): string[] {
+    return text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+
   const form = useForm<
     CreateApplicationFormValues,
     unknown,
@@ -52,8 +68,8 @@ export function CreateApplicationDialog() {
     resolver: zodResolver(createApplicationSchema),
     defaultValues: {
       name: "",
-      allowedOrigins: "",
-      redirectUris: "",
+      allowedOrigins: [],
+      redirectUris: [],
       accessTokenTTL: "15m",
       refreshTokenTTL: "7d",
     },
@@ -64,6 +80,8 @@ export function CreateApplicationDialog() {
       onSuccess: (data) => {
         setOpen(false);
         form.reset();
+        setAllowedOriginsText("");
+        setRedirectUrisText("");
         setReveal({
           clientId: data.clientId,
           clientSecret: data.clientSecret,
@@ -130,7 +148,14 @@ export function CreateApplicationDialog() {
                     <FormControl>
                       <Textarea
                         placeholder={"https://app.example.com\nhttps://staging.example.com"}
-                        {...field}
+                        value={allowedOriginsText}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                        onChange={(event) => {
+                          setAllowedOriginsText(event.target.value);
+                          field.onChange(linesToArray(event.target.value));
+                        }}
                       />
                     </FormControl>
                     <FormDescription>One origin per line.</FormDescription>
@@ -148,7 +173,14 @@ export function CreateApplicationDialog() {
                     <FormControl>
                       <Textarea
                         placeholder={"https://app.example.com/callback"}
-                        {...field}
+                        value={redirectUrisText}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                        onChange={(event) => {
+                          setRedirectUrisText(event.target.value);
+                          field.onChange(linesToArray(event.target.value));
+                        }}
                       />
                     </FormControl>
                     <FormDescription>One URI per line.</FormDescription>
