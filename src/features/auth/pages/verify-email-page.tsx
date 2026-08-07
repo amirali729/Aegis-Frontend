@@ -14,6 +14,7 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { useVerifyEmail } from "@/features/auth/mutations/use-password-reset";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { ROUTES } from "@/shared/config/routes";
+import { peekPendingOAuthParams } from "@/shared/auth/Oauth";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -23,6 +24,14 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<"pending" | "success" | "error">(
     "pending",
   );
+
+  // Verification links are opened from an email, often in a fresh tab, so
+  // any pending OAuth authorize request only lives in localStorage now —
+  // surface it here so "back to sign in" carries it forward to /login.
+  const pendingOAuthSearch = peekPendingOAuthParams();
+  const loginLinkTo = pendingOAuthSearch
+    ? { pathname: ROUTES.login, search: pendingOAuthSearch }
+    : ROUTES.login;
 
   useEffect(() => {
     if (!token || hasSubmitted.current) return;
@@ -46,7 +55,7 @@ export default function VerifyEmailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button render={<Link to={ROUTES.login} />} className="w-full">
+          <Button render={<Link to={loginLinkTo} />} className="w-full">
             Back to sign in
           </Button>
         </CardContent>
@@ -81,7 +90,7 @@ export default function VerifyEmailPage() {
       </CardHeader>
       {status !== "pending" && (
         <CardContent>
-          <Button render={<Link to={ROUTES.login} />} className="w-full">
+          <Button render={<Link to={loginLinkTo} />} className="w-full">
             Back to sign in
           </Button>
         </CardContent>

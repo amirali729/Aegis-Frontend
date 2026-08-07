@@ -29,6 +29,8 @@ export const queryKeys = {
     list: ["applications", "list"] as const,
     detail: (id: string) => ["applications", "detail", id] as const,
     apiKeys: (appId: string) => ["applications", appId, "api-keys"] as const,
+    oauthClients: (appId: string) =>
+      ["applications", appId, "oauth-clients"] as const,
   },
   auditLogs: {
     list: (filters: object) => ["audit-logs", "list", filters] as const,

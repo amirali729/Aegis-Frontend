@@ -76,3 +76,23 @@ export const createApiKeySchema = z.object({
 export type CreateApiKeyFormValues = z.infer<
   typeof createApiKeySchema
 >;
+
+const scopeListSchema = z.array(z.string().trim().min(1));
+
+export const createOAuthClientSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters.")
+    .max(100, "Name must be at most 100 characters."),
+
+  redirectUris: urlListSchema.min(1, "At least one redirect URI is required."),
+
+  clientType: z.enum(["confidential", "public"]),
+
+  scopes: scopeListSchema,
+});
+
+export type CreateOAuthClientFormValues = z.infer<
+  typeof createOAuthClientSchema
+>;
