@@ -13,7 +13,14 @@ import NotFoundPage from "@/routes/not-found-page";
 import ForbiddenPage from "@/routes/forbidden-page";
 
 const LoginPage = lazy(() => import("@/features/auth/pages/login-page"));
-const LandingPage = lazy(() => import("@/features/landing/pages/landing-page"));const SignupPage = lazy(() => import("@/features/auth/pages/signup-page"));
+const LandingPage = lazy(() => import("@/features/landing/pages/landing-page"));
+const OAuthConsentPage = lazy(() => import("@/features/oauth/pages/oauth-consent-page"));
+const OAuthPlaygroundPage = lazy(
+  () => import("@/features/oauth/pages/oauth-playground-page"),
+);
+const OAuthPlaygroundCallbackPage = lazy(
+  () => import("@/features/oauth/pages/oauth-playground-callback-page"),
+);const SignupPage = lazy(() => import("@/features/auth/pages/signup-page"));
 const ForgotPasswordPage = lazy(
   () => import("@/features/auth/pages/forgot-password-page"),
 );
@@ -85,6 +92,9 @@ const AcceptInvitePage = lazy(
 const AuditLogsPage = lazy(
   () => import("@/features/audit-logs/pages/audit-logs-page"),
 );
+const NotificationsPage = lazy(
+  () => import("@/features/notifications/pages/notifications-page"),
+);
 const SdkPage = lazy(() => import("@/features/developer/sdk/pages/sdk-page"));
 
 function withSuspense(element: React.ReactNode) {
@@ -150,6 +160,16 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           {
+            // Standalone — must be logged in, but rendered without the
+            // dashboard chrome since it's a third-party-facing screen.
+            path: ROUTES.oauthConsent,
+            element: withSuspense(<OAuthConsentPage />),
+          },
+          {
+            path: ROUTES.developerOAuthPlaygroundCallback,
+            element: withSuspense(<OAuthPlaygroundCallbackPage />),
+          },
+          {
             element: <DashboardLayout />,
             children: [
               {
@@ -184,6 +204,10 @@ export const router = createBrowserRouter([
               {
                 path: ROUTES.auditLogs,
                 element: withSuspense(<AuditLogsPage />),
+              },
+              {
+                path: ROUTES.notifications,
+                element: withSuspense(<NotificationsPage />),
               },
               {
                 path: ROUTES.settings,
@@ -252,6 +276,10 @@ export const router = createBrowserRouter([
               {
                 path: ROUTES.developerSdk,
                 element: withSuspense(<SdkPage />),
+              },
+              {
+                path: ROUTES.developerOAuthPlayground,
+                element: withSuspense(<OAuthPlaygroundPage />),
               },
               {
                 path: ROUTES.developerApiReference,
