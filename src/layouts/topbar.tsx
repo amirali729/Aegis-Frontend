@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  Bell,
   CircleHelp,
   LogOut,
   Menu,
@@ -27,6 +26,7 @@ import { useAuthStore } from "@/features/auth/store/auth-store";
 import { useLogout } from "@/features/auth/mutations/use-logout";
 import { ROUTES } from "@/shared/config/routes";
 import { appConfig } from "@/shared/config/app";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 
 function initials(username: string) {
   return username.slice(0, 2).toUpperCase();
@@ -77,9 +77,7 @@ export function Topbar() {
           {isDark ? <Sun /> : <Moon />}
         </Button>
 
-        <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-          <Bell />
-        </Button>
+        <NotificationBell />
 
         <Button
           variant="ghost"

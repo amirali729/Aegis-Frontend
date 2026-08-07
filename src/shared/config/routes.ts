@@ -24,6 +24,7 @@ export const ROUTES = {
   organizationDetails: (id: string) => `/organizations/${id}`,
   sessions: "/sessions",
   auditLogs: "/audit-logs",
+  notifications: "/notifications",
   settings: "/settings",
   settingsProfile: "/settings/profile",
   settingsGeneral: "/settings/general",
