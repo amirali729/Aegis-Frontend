@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -26,7 +27,13 @@ import { useLogin } from "@/features/auth/mutations/use-login";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { ApiError } from "@/shared/errors/api-error";
 import { ROUTES } from "@/shared/config/routes";
-import { parseOAuthAuthorizeParams, oauthAuthorizeUrl } from "@/shared/auth/o-auth";
+import {
+  parseOAuthAuthorizeParams,
+  oauthAuthorizeUrl,
+  storePendingOAuthParams,
+  consumePendingOAuthParams,
+  peekPendingOAuthParams,
+} from "@/shared/auth/Oauth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -40,10 +47,22 @@ export default function LoginPage() {
 
   // If the backend's GET /oauth/authorize bounced an unauthenticated
   // visitor here, its original query params are preserved on our own
-  // URL. Detect that and, once logged in, send the full page back to
-  // the backend's authorize endpoint (not an SPA route) so it can
-  // re-evaluate the request now that the session cookie is set.
+  // URL. Detect that, persist it (it needs to survive a possible detour
+  // through signup + email verification, which can happen in another
+  // tab), and once logged in, send the full page back to the backend's
+  // authorize endpoint (not an SPA route) so it can re-evaluate the
+  // request now that the session cookie is set.
   const oauthParams = parseOAuthAuthorizeParams(location.search);
+
+  useEffect(() => {
+    if (oauthParams) storePendingOAuthParams(location.search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  // Falls back to a pending flow stashed earlier (e.g. the visitor signed
+  // up first) so the "continue" copy and redirect still work even when
+  // this page was reached without the query string on its own URL.
+  const hasPendingOAuth = Boolean(oauthParams) || Boolean(peekPendingOAuthParams());
 
   const redirectTo =
     (location.state as { from?: string } | null)?.from ?? ROUTES.dashboard;
@@ -51,8 +70,11 @@ export default function LoginPage() {
   function onSubmit(values: LoginFormValues) {
     login.mutate(values, {
       onSuccess: () => {
-        if (oauthParams) {
-          window.location.href = oauthAuthorizeUrl(location.search);
+        const pendingSearch = oauthParams
+          ? location.search
+          : consumePendingOAuthParams();
+        if (pendingSearch) {
+          window.location.href = oauthAuthorizeUrl(pendingSearch);
           return;
         }
         navigate(redirectTo, { replace: true });
@@ -68,7 +90,7 @@ export default function LoginPage() {
       <CardHeader>
         <CardTitle className="text-xl">Sign in</CardTitle>
         <CardDescription>
-          {oauthParams
+          {hasPendingOAuth
             ? "Sign in to continue — you'll be redirected back automatically."
             : "Enter your username and password to access your account."}
         </CardDescription>
@@ -112,7 +134,7 @@ export default function LoginPage() {
                   <div className="flex items-center justify-between">
                     <FormLabel>Password</FormLabel>
                     <Link
-                      to={ROUTES.forgotPassword}
+                      to={{ pathname: ROUTES.forgotPassword, search: location.search }}
                       className="text-sm text-muted-foreground underline-offset-4 hover:underline"
                     >
                       Forgot password?
@@ -140,7 +162,7 @@ export default function LoginPage() {
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
           <Link
-            to={ROUTES.signup}
+            to={{ pathname: ROUTES.signup, search: location.search }}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Sign up

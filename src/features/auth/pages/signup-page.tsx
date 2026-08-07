@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CheckCircle2 } from "lucide-react";
@@ -30,8 +30,13 @@ import {
 import { useSignup } from "@/features/auth/mutations/use-signup";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { ROUTES } from "@/shared/config/routes";
+import {
+  parseOAuthAuthorizeParams,
+  storePendingOAuthParams,
+} from "@/shared/auth/Oauth";
 
 export default function SignupPage() {
+  const location = useLocation();
   const signup = useSignup();
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
@@ -39,6 +44,17 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
     defaultValues: { username: "", email: "", password: "" },
   });
+
+  // Someone can land here straight from GET /oauth/authorize too (e.g. it
+  // bounced them to /login and they clicked "Sign up" instead). Persist
+  // the pending authorize request the same way login does, so it survives
+  // email verification and the eventual sign-in.
+  const oauthParams = parseOAuthAuthorizeParams(location.search);
+
+  useEffect(() => {
+    if (oauthParams) storePendingOAuthParams(location.search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   function onSubmit(values: SignupFormValues) {
     signup.mutate(values, {
@@ -55,10 +71,15 @@ export default function SignupPage() {
           <CardDescription>
             We sent a verification link to <strong>{submittedEmail}</strong>.
             Click it to activate your account, then sign in.
+            {oauthParams &&
+              " Once you're verified and signed in, you'll be sent back to finish connecting the app."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button render={<Link to={ROUTES.login} />} className="w-full">
+          <Button
+            render={<Link to={{ pathname: ROUTES.login, search: location.search }} />}
+            className="w-full"
+          >
             Back to sign in
           </Button>
         </CardContent>
@@ -71,7 +92,9 @@ export default function SignupPage() {
       <CardHeader>
         <CardTitle className="text-xl">Create an account</CardTitle>
         <CardDescription>
-          Get started with Aegis in a few seconds.
+          {oauthParams
+            ? "Create an account to continue — you'll be redirected back after signing in."
+            : "Get started with Aegis in a few seconds."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -143,7 +166,7 @@ export default function SignupPage() {
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
-            to={ROUTES.login}
+            to={{ pathname: ROUTES.login, search: location.search }}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Sign in
