@@ -96,6 +96,7 @@ const NotificationsPage = lazy(
   () => import("@/features/notifications/pages/notifications-page"),
 );
 const SdkPage = lazy(() => import("@/features/developer/sdk/pages/sdk-page"));
+const WebhooksPage = lazy(() => import("@/features/webhooks/pages/webhooks-page"));
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -287,7 +288,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.developerWebhooks,
-                element: <ComingSoonPage title="Webhooks" />,
+                element: withSuspense(<WebhooksPage />),
               },
               {
                 path: ROUTES.developerOpenapi,
