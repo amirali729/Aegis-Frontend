@@ -33,7 +33,7 @@ import { ROUTES } from "@/shared/config/routes";
 import {
   parseOAuthAuthorizeParams,
   storePendingOAuthParams,
-} from "@/shared/auth/Oauth";
+} from "@/shared/auth/o-auth";
 
 export default function SignupPage() {
   const location = useLocation();

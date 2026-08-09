@@ -14,7 +14,7 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { useVerifyEmail } from "@/features/auth/mutations/use-password-reset";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 import { ROUTES } from "@/shared/config/routes";
-import { peekPendingOAuthParams } from "@/shared/auth/Oauth";
+import { peekPendingOAuthParams } from "@/shared/auth/o-auth";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();

@@ -2,8 +2,12 @@ import { Outlet } from "react-router-dom";
 
 import { Sidebar } from "@/layouts/sidebar";
 import { Topbar } from "@/layouts/topbar";
+import { CommandPalette } from "@/features/command-palette/components/command-palette";
+import { useCommandPaletteShortcut } from "@/features/command-palette/hooks/use-command-palette-shortcut";
 
 export function DashboardLayout() {
+  useCommandPaletteShortcut();
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -15,6 +19,8 @@ export function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      <CommandPalette />
     </div>
   );
 }

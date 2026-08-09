@@ -33,7 +33,7 @@ import {
   storePendingOAuthParams,
   consumePendingOAuthParams,
   peekPendingOAuthParams,
-} from "@/shared/auth/Oauth";
+} from "@/shared/auth/o-auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();

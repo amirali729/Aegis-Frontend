@@ -27,17 +27,23 @@ import { useLogout } from "@/features/auth/mutations/use-logout";
 import { ROUTES } from "@/shared/config/routes";
 import { appConfig } from "@/shared/config/app";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { useCommandPaletteStore } from "@/features/command-palette/store/command-palette-store";
 
 function initials(username: string) {
   return username.slice(0, 2).toUpperCase();
 }
 
-export function Topbar() {
+export function Topbar({
+  searchPlaceholder = "Search anything...",
+}: {
+  searchPlaceholder?: string;
+}) {
   const toggleSidebar = useSidebarStore((state) => state.toggle);
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
+  const openCommandPalette = useCommandPaletteStore((state) => state.open);
 
   const isDark = theme === "dark";
 
@@ -55,12 +61,14 @@ export function Topbar() {
 
         <div className="relative hidden max-w-sm flex-1 sm:block">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search anything..."
+          <button
+            type="button"
+            onClick={openCommandPalette}
             aria-label="Search"
-            className="h-8 w-full rounded-lg border border-border bg-muted/50 pr-12 pl-8 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          />
+            className="flex h-8 w-full items-center rounded-lg border border-border bg-muted/50 pr-12 pl-8 text-left text-sm text-muted-foreground outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {searchPlaceholder}
+          </button>
           <kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
             ⌘K
           </kbd>
