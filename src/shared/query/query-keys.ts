@@ -35,4 +35,10 @@ export const queryKeys = {
   auditLogs: {
     list: (filters: object) => ["audit-logs", "list", filters] as const,
   },
+  webhooks: {
+    list: (appId: string) => ["applications", appId, "webhooks", "list"] as const,
+    stats: (appId: string) => ["applications", appId, "webhooks", "stats"] as const,
+    deliveries: (appId: string, params: object) =>
+      ["applications", appId, "webhooks", "deliveries", params] as const,
+  },
 } as const;

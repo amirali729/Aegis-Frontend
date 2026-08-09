@@ -9,8 +9,12 @@ import { AuthLayout } from "@/layouts/auth-layout";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { GuestRoute } from "@/routes/guest-route";
 import { ProtectedRoute } from "@/routes/protected-route";
+import { PermissionRoute } from "@/routes/permission-routes";
 import NotFoundPage from "@/routes/not-found-page";
 import ForbiddenPage from "@/routes/forbidden-page";
+import { PLATFORM_ADMIN_PERMISSION } from "@/features/admin/constants/admin-permissions";
+import { AdminLayout } from "@/features/admin/layout/admin-layout";
+import { ADMIN_NAV_FLAT_ITEMS } from "@/features/admin/layout/admin-nav-items";
 
 const LoginPage = lazy(() => import("@/features/auth/pages/login-page"));
 const LandingPage = lazy(() => import("@/features/landing/pages/landing-page"));
@@ -96,6 +100,15 @@ const NotificationsPage = lazy(
   () => import("@/features/notifications/pages/notifications-page"),
 );
 const SdkPage = lazy(() => import("@/features/developer/sdk/pages/sdk-page"));
+const WebhooksPage = lazy(() => import("@/features/webhooks/pages/webhooks-page"));
+const ChangelogPage = lazy(
+  () => import("@/features/developer/changelog/pages/changelog-page"),
+);
+const ChangelogDetailPage = lazy(
+  () => import("@/features/developer/changelog/pages/changelog-detail-page"),
+);
+const AdminOverviewPage = lazy(() => import("@/features/admin/pages/admin-overview-page"));
+const AdminUsersPage = lazy(() => import("@/features/admin/pages/admin-users-page"));
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -287,7 +300,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.developerWebhooks,
-                element: <ComingSoonPage title="Webhooks" />,
+                element: withSuspense(<WebhooksPage />),
               },
               {
                 path: ROUTES.developerOpenapi,
@@ -299,7 +312,32 @@ export const router = createBrowserRouter([
               },
               {
                 path: ROUTES.developerChangelog,
-                element: <ComingSoonPage title="Changelog" />,
+                element: withSuspense(<ChangelogPage />),
+              },
+              {
+                path: `${ROUTES.developerChangelog}/:version`,
+                element: withSuspense(<ChangelogDetailPage />),
+              },
+            ],
+          },
+          {
+            // Platform-role-only admin section — separate layout/sidebar
+            // from the org-scoped dashboard above. Gated on `user:view`,
+            // the permission api-guide.md itself recommends checking to
+            // decide whether to render this nav at all (owner/admin/
+            // support platform roles get it; a regular user never does).
+            element: <PermissionRoute permission={PLATFORM_ADMIN_PERMISSION} />,
+            children: [
+              {
+                element: <AdminLayout />,
+                children: [
+                  { path: ROUTES.adminOverview, element: withSuspense(<AdminOverviewPage />) },
+                  { path: ROUTES.adminUsers, element: withSuspense(<AdminUsersPage />) },
+                  ...ADMIN_NAV_FLAT_ITEMS.filter((item) => !item.isBuilt).map((item) => ({
+                    path: item.href,
+                    element: <ComingSoonPage title={item.label} />,
+                  })),
+                ],
               },
             ],
           },

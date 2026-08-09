@@ -9,6 +9,7 @@ import {
   Settings,
   Monitor,
   Code2,
+  Webhook,
 } from "lucide-react";
 
 import { ROUTES } from "@/shared/config/routes";
@@ -83,7 +84,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: ROUTES.developerOAuthPlayground,
         icon: KeyRound,
       },
-      { label: "Webhooks", href: ROUTES.developerWebhooks, icon: Code2 },
+      { label: "Webhooks", href: ROUTES.developerWebhooks, icon: Webhook },
       { label: "OpenAPI", href: ROUTES.developerOpenapi, icon: Code2 },
       { label: "Postman Collection", href: ROUTES.developerPostman, icon: Code2 },
       { label: "Changelog", href: ROUTES.developerChangelog, icon: Code2 },

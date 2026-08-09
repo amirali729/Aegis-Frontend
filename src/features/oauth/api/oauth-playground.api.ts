@@ -1,10 +1,17 @@
 import { httpClient } from "@/shared/api/axios";
+import { oauthOrigin } from "@/shared/auth/o-auth";
 
 /**
  * These three endpoints return raw RFC 6749/7009/7662 JSON, not the
- * `{success, data, ...}` envelope the rest of the API uses (Integration
- * Guide §2), so they go straight through `httpClient` rather than the
- * `apiPost` helper, which always unwraps `.data.data`.
+ * `{success, data, ...}` envelope the rest of the API uses (see
+ * OAuth-OIDC-Guide.md §7), so they go straight through `httpClient`
+ * rather than the `apiPost` helper, which always unwraps `.data.data`.
+ *
+ * They also live at the bare, unversioned origin — `{oauthOrigin}/oauth/token`,
+ * NOT `{apiBaseUrl}/oauth/token` (which would incorrectly land under
+ * `/api/v1`). Passing an absolute URL to `httpClient` overrides its
+ * configured `baseURL` (standard axios behavior), which is how that's
+ * achieved here without a second axios instance.
  *
  * Assumption to verify against the live backend: the exact request
  * content-type for /oauth/token. RFC 6749 specifies
@@ -43,7 +50,7 @@ function toFormBody(fields: Record<string, string | undefined>) {
 }
 
 async function postForm<T>(path: string, fields: Record<string, string | undefined>) {
-  const response = await httpClient.post<T>(path, toFormBody(fields), {
+  const response = await httpClient.post<T>(`${oauthOrigin}${path}`, toFormBody(fields), {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   });
   return response.data;

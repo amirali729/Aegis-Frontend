@@ -48,14 +48,7 @@ export default function OAuthConsentPage() {
     setError(null);
     try {
       const result = await oauthApi.decide(params, approved);
-      const target = result.redirectUri ?? result.redirect_uri ?? result.url;
-      if (target) {
-        window.location.href = target;
-      } else {
-        // Fall back to the app's own redirect_uri if the backend
-        // response didn't include an explicit target.
-        window.location.href = params.redirect_uri;
-      }
+      window.location.href = result.redirect_url;
     } catch (err) {
       setStatus("error");
       setError(getErrorMessage(err));
