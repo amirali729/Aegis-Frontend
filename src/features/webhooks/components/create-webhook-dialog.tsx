@@ -8,13 +8,6 @@ import { Input } from "@/shared/components/ui/input";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -40,18 +33,17 @@ import { WebhookEventPicker } from "@/features/webhooks/components/webhook-event
 import { OneTimeSecretDialog } from "@/shared/components/one-time-secret-dialog";
 import { getErrorMessage } from "@/shared/errors/get-error-message";
 
-export function CreateWebhookDialog({ applicationId }: { applicationId: string }) {
+export function CreateWebhookDialog({ orgId }: { orgId: string }) {
   const [open, setOpen] = useState(false);
-  const [reveal, setReveal] = useState<{ signingSecret: string; warning: string } | null>(null);
-  const createWebhook = useCreateWebhook(applicationId);
+  const [reveal, setReveal] = useState<{ secret: string; warning: string } | null>(null);
+  const createWebhook = useCreateWebhook(orgId);
 
   const form = useForm<CreateWebhookFormValues>({
     resolver: zodResolver(createWebhookSchema),
     defaultValues: {
       name: "",
-      environment: "production",
-      endpointUrl: "",
-      events: [],
+      url: "",
+      subscribedEvents: [],
     },
   });
 
@@ -61,7 +53,7 @@ export function CreateWebhookDialog({ applicationId }: { applicationId: string }
         setOpen(false);
         form.reset();
         setReveal({
-          signingSecret: data.signingSecret,
+          secret: data.secret,
           warning: data.warning,
         });
       },
@@ -107,48 +99,23 @@ export function CreateWebhookDialog({ applicationId }: { applicationId: string }
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="environment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Environment</FormLabel>
-                      <Select value={field.value} onValueChange={(v) => v && field.onChange(v)}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="production">Production</SelectItem>
-                          <SelectItem value="staging">Staging</SelectItem>
-                          <SelectItem value="development">Development</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="endpointUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Endpoint URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://api.example.com/webhooks" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Endpoint URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://api.example.com/webhooks" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
-                name="events"
+                name="subscribedEvents"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Events</FormLabel>
@@ -175,7 +142,7 @@ export function CreateWebhookDialog({ applicationId }: { applicationId: string }
           onOpenChange={(isOpen) => !isOpen && setReveal(null)}
           title="Webhook created"
           label="Signing secret"
-          secret={reveal.signingSecret}
+          secret={reveal.secret}
           warning={reveal.warning}
         />
       )}

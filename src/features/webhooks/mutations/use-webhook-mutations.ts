@@ -9,65 +9,74 @@ import type {
   UpdateWebhookFormValues,
 } from "@/features/webhooks/schemas/webhook.schemas";
 
-export function useCreateWebhook(applicationId: string) {
+export function useCreateWebhook(orgId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: CreateWebhookFormValues) => webhooksApi.create(applicationId, body),
+    mutationFn: (body: CreateWebhookFormValues) => webhooksApi.create(orgId, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(applicationId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.stats(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(orgId) });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 }
 
-export function useUpdateWebhook(applicationId: string) {
+export function useUpdateWebhook(orgId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ webhookId, body }: { webhookId: string; body: UpdateWebhookFormValues }) =>
-      webhooksApi.update(applicationId, webhookId, body),
+      webhooksApi.update(orgId, webhookId, body),
     onSuccess: () => {
       toast.success("Webhook updated.");
-      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(orgId) });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 }
 
-export function useDeleteWebhook(applicationId: string) {
+export function useDeleteWebhook(orgId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (webhookId: string) => webhooksApi.remove(applicationId, webhookId),
+    mutationFn: (webhookId: string) => webhooksApi.remove(orgId, webhookId),
     onSuccess: () => {
       toast.success("Webhook deleted.");
-      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(applicationId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.stats(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(orgId) });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 }
 
-export function useRegenerateWebhookSecret(applicationId: string) {
+export function useToggleWebhookEnabled(orgId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (webhookId: string) => webhooksApi.regenerateSecret(applicationId, webhookId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(applicationId) });
+    mutationFn: ({ webhookId, enable }: { webhookId: string; enable: boolean }) =>
+      enable ? webhooksApi.enable(orgId, webhookId) : webhooksApi.disable(orgId, webhookId),
+    onSuccess: (_data, variables) => {
+      toast.success(variables.enable ? "Webhook enabled." : "Webhook disabled.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.list(orgId) });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 }
 
-export function useSendTestPing(applicationId: string) {
+export function useRotateWebhookSecret(orgId: string) {
   return useMutation({
-    mutationFn: (webhookId: string) => webhooksApi.sendTestPing(applicationId, webhookId),
+    mutationFn: (webhookId: string) => webhooksApi.rotateSecret(orgId, webhookId),
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+export function useRedeliverWebhookDelivery(orgId: string, webhookId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (deliveryId: string) => webhooksApi.redeliver(orgId, webhookId, deliveryId),
     onSuccess: (data) => {
-      if (data.success) toast.success(data.message || "Test event delivered.");
-      else toast.error(data.message || "Test event failed to deliver.");
+      toast.success(data.message || "Redelivery queued.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.webhooks.deliveries(orgId, webhookId) });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });

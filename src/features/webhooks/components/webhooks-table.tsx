@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link2, MoreHorizontal, Pencil, RefreshCw, Send, Trash2 } from "lucide-react";
+import { Link2, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 import {
   Table,
@@ -24,22 +24,29 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { OneTimeSecretDialog } from "@/shared/components/one-time-secret-dialog";
 import { useFormattedDateTime } from "@/shared/timezone/format";
 import { cn } from "@/shared/lib/utils";
-import { useWebhooks } from "@/features/webhooks/queries/use-webhooks";
+import { useWebhookDeliveries, useWebhooks } from "@/features/webhooks/queries/use-webhooks";
 import {
   useDeleteWebhook,
-  useRegenerateWebhookSecret,
-  useSendTestPing,
-  useUpdateWebhook,
+  useRotateWebhookSecret,
+  useToggleWebhookEnabled,
 } from "@/features/webhooks/mutations/use-webhook-mutations";
 import type { Webhook } from "@/features/webhooks/types/webhook.types";
 import { EditWebhookDialog } from "@/features/webhooks/components/edit-webhook-dialog";
 
-function SuccessRateBar({ rate }: { rate: number }) {
-  const color =
-    rate >= 97 ? "bg-emerald-500" : rate >= 90 ? "bg-amber-500" : "bg-destructive";
+function SuccessRateCell({ orgId, webhookId }: { orgId: string; webhookId: string }) {
+  const deliveriesQuery = useWebhookDeliveries(orgId, webhookId);
+  const deliveries = deliveriesQuery.data ?? [];
+  const resolved = deliveries.filter((d) => d.status === "delivered" || d.status === "failed" || d.status === "dead_letter");
+  const deliveredCount = deliveries.filter((d) => d.status === "delivered").length;
+  const rate = resolved.length > 0 ? (deliveredCount / resolved.length) * 100 : null;
+
+  if (deliveriesQuery.isLoading) return <Skeleton className="h-4 w-20" />;
+  if (rate === null) return <span className="text-sm text-muted-foreground">No deliveries</span>;
+
+  const color = rate >= 97 ? "bg-emerald-500" : rate >= 90 ? "bg-amber-500" : "bg-destructive";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" title={`Last ${resolved.length} deliveries`}>
       <span className="w-11 shrink-0 text-sm tabular-nums">{rate.toFixed(1)}%</span>
       <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
         <div className={cn("h-full rounded-full", color)} style={{ width: `${Math.min(rate, 100)}%` }} />
@@ -48,16 +55,25 @@ function SuccessRateBar({ rate }: { rate: number }) {
   );
 }
 
-function WebhookRow({ applicationId, webhook }: { applicationId: string; webhook: Webhook }) {
-  const lastDelivery = useFormattedDateTime(webhook.lastDeliveryAt);
+function LastDeliveryCell({ webhook }: { webhook: Webhook }) {
+  const lastAt =
+    [webhook.lastSuccessAt, webhook.lastFailureAt]
+      .filter((value): value is string => Boolean(value))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+  const formatted = useFormattedDateTime(lastAt);
+
+  return <span className="text-muted-foreground">{lastAt ? formatted.dateTime : "—"}</span>;
+}
+
+function WebhookRow({ orgId, webhook }: { orgId: string; webhook: Webhook }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [reveal, setReveal] = useState<{ signingSecret: string; warning: string } | null>(null);
+  const [reveal, setReveal] = useState<{ secret: string; warning: string } | null>(null);
 
-  const updateWebhook = useUpdateWebhook(applicationId);
-  const deleteWebhook = useDeleteWebhook(applicationId);
-  const regenerateSecret = useRegenerateWebhookSecret(applicationId);
-  const sendTestPing = useSendTestPing(applicationId);
+  const toggleEnabled = useToggleWebhookEnabled(orgId);
+  const deleteWebhook = useDeleteWebhook(orgId);
+  const rotateSecret = useRotateWebhookSecret(orgId);
+  const isEnabled = webhook.status === "active";
 
   return (
     <TableRow>
@@ -68,26 +84,27 @@ function WebhookRow({ applicationId, webhook }: { applicationId: string; webhook
           </span>
           <div>
             <p className="font-medium">{webhook.name}</p>
-            <p className="text-xs text-muted-foreground capitalize">{webhook.environment}</p>
+            <p className="text-xs text-muted-foreground">
+              {webhook.subscribedEvents.length} event{webhook.subscribedEvents.length === 1 ? "" : "s"}
+            </p>
           </div>
         </div>
       </TableCell>
       <TableCell>
         <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
-          {webhook.endpointUrl}
+          {webhook.url}
         </code>
       </TableCell>
-      <TableCell className="text-center tabular-nums">{webhook.recentEventCount}</TableCell>
       <TableCell>
-        <Badge variant={webhook.status === "active" ? "success" : "secondary"}>
-          {webhook.status === "active" ? "Active" : "Inactive"}
+        <Badge variant={isEnabled ? "success" : "secondary"}>
+          {isEnabled ? "Active" : "Disabled"}
         </Badge>
       </TableCell>
       <TableCell>
-        <SuccessRateBar rate={webhook.successRate} />
+        <SuccessRateCell orgId={orgId} webhookId={webhook.id} />
       </TableCell>
-      <TableCell className="text-muted-foreground">
-        {webhook.lastDeliveryAt ? lastDelivery.dateTime : "—"}
+      <TableCell>
+        <LastDeliveryCell webhook={webhook} />
       </TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
@@ -104,32 +121,20 @@ function WebhookRow({ applicationId, webhook }: { applicationId: string; webhook
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => sendTestPing.mutate(webhook.id)}
-              disabled={sendTestPing.isPending}
+              onClick={() => toggleEnabled.mutate({ webhookId: webhook.id, enable: !isEnabled })}
+              disabled={toggleEnabled.isPending}
             >
-              <Send />
-              Send test event
+              <RefreshCw />
+              {isEnabled ? "Disable" : "Enable"}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
-                updateWebhook.mutate({
-                  webhookId: webhook.id,
-                  body: { status: webhook.status === "active" ? "inactive" : "active" },
-                })
+                rotateSecret.mutate(webhook.id, { onSuccess: (data) => setReveal(data) })
               }
+              disabled={rotateSecret.isPending}
             >
               <RefreshCw />
-              {webhook.status === "active" ? "Deactivate" : "Activate"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                regenerateSecret.mutate(webhook.id, {
-                  onSuccess: (data) => setReveal(data),
-                })
-              }
-            >
-              <RefreshCw />
-              Regenerate signing secret
+              Rotate signing secret
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={() => setConfirmOpen(true)}>
               <Trash2 />
@@ -149,7 +154,7 @@ function WebhookRow({ applicationId, webhook }: { applicationId: string; webhook
         />
 
         <EditWebhookDialog
-          applicationId={applicationId}
+          orgId={orgId}
           webhook={webhook}
           open={editOpen}
           onOpenChange={setEditOpen}
@@ -160,9 +165,9 @@ function WebhookRow({ applicationId, webhook }: { applicationId: string; webhook
         <OneTimeSecretDialog
           open={Boolean(reveal)}
           onOpenChange={(isOpen) => !isOpen && setReveal(null)}
-          title="Signing secret regenerated"
+          title="Signing secret rotated"
           label="Signing secret"
-          secret={reveal.signingSecret}
+          secret={reveal.secret}
           warning={reveal.warning}
         />
       )}
@@ -170,8 +175,8 @@ function WebhookRow({ applicationId, webhook }: { applicationId: string; webhook
   );
 }
 
-export function WebhooksTable({ applicationId }: { applicationId: string }) {
-  const webhooksQuery = useWebhooks(applicationId);
+export function WebhooksTable({ orgId }: { orgId: string }) {
+  const webhooksQuery = useWebhooks(orgId);
 
   if (webhooksQuery.isPending) {
     return (
@@ -209,7 +214,6 @@ export function WebhooksTable({ applicationId }: { applicationId: string }) {
         <TableRow>
           <TableHead>Name</TableHead>
           <TableHead>Endpoint URL</TableHead>
-          <TableHead className="text-center">Events</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Success Rate</TableHead>
           <TableHead>Last Delivery</TableHead>
@@ -218,7 +222,7 @@ export function WebhooksTable({ applicationId }: { applicationId: string }) {
       </TableHeader>
       <TableBody>
         {webhooksQuery.data.map((webhook) => (
-          <WebhookRow key={webhook.id} applicationId={applicationId} webhook={webhook} />
+          <WebhookRow key={webhook.id} orgId={orgId} webhook={webhook} />
         ))}
       </TableBody>
     </Table>

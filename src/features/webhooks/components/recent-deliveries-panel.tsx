@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, Clock, RefreshCw, XCircle } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
@@ -6,28 +6,43 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
 import { useFormattedDateTime } from "@/shared/timezone/format";
-import type { WebhookDelivery, DeliveryStatus } from "@/features/webhooks/types/webhook.types";
+import type { DeliveryWithWebhookName } from "@/features/webhooks/queries/use-webhooks";
+import type { DeliveryStatus } from "@/features/webhooks/types/webhook.types";
 
 const STATUS_ICON: Record<DeliveryStatus, typeof CheckCircle2> = {
-  success: CheckCircle2,
+  delivered: CheckCircle2,
   failed: XCircle,
+  dead_letter: XCircle,
   pending: Clock,
+  delivering: RefreshCw,
 };
 
 const STATUS_ICON_CLASS: Record<DeliveryStatus, string> = {
-  success: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+  delivered: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
   failed: "bg-destructive/10 text-destructive",
+  dead_letter: "bg-destructive/10 text-destructive",
   pending: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
+  delivering: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
 };
 
 const STATUS_BADGE_VARIANT: Record<DeliveryStatus, "success" | "destructive" | "secondary"> = {
-  success: "success",
+  delivered: "success",
   failed: "destructive",
+  dead_letter: "destructive",
   pending: "secondary",
+  delivering: "secondary",
 };
 
-function DeliveryRow({ delivery }: { delivery: WebhookDelivery }) {
-  const occurred = useFormattedDateTime(delivery.occurredAt);
+const STATUS_LABEL: Record<DeliveryStatus, string> = {
+  delivered: "Delivered",
+  failed: "Failed",
+  dead_letter: "Dead letter",
+  pending: "Pending",
+  delivering: "Delivering",
+};
+
+function DeliveryRow({ delivery }: { delivery: DeliveryWithWebhookName }) {
+  const occurred = useFormattedDateTime(delivery.createdAt);
   const Icon = STATUS_ICON[delivery.status];
 
   return (
@@ -38,13 +53,11 @@ function DeliveryRow({ delivery }: { delivery: WebhookDelivery }) {
         <Icon className="size-3.5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-mono text-sm font-medium">{delivery.event}</p>
-        <p className="truncate text-xs text-muted-foreground">{delivery.subjectLabel}</p>
+        <p className="font-mono text-sm font-medium">{delivery.eventType}</p>
+        <p className="truncate text-xs text-muted-foreground">{delivery.webhookName}</p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <Badge variant={STATUS_BADGE_VARIANT[delivery.status]} className="capitalize">
-          {delivery.status}
-        </Badge>
+        <Badge variant={STATUS_BADGE_VARIANT[delivery.status]}>{STATUS_LABEL[delivery.status]}</Badge>
         <span className="text-xs text-muted-foreground" title={occurred.dateTime}>
           {occurred.time}
         </span>
@@ -60,7 +73,7 @@ export function RecentDeliveriesPanel({
   onRetry,
   onViewAll,
 }: {
-  deliveries: WebhookDelivery[] | undefined;
+  deliveries: DeliveryWithWebhookName[] | undefined;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;

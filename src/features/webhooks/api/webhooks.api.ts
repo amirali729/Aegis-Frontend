@@ -13,26 +13,20 @@ import {
 } from "@/features/webhooks/constants/webhook-endpoints";
 import type {
   CreateWebhookResponse,
+  RedeliverResponse,
   Webhook,
   WebhookDelivery,
-  WebhookSecretReveal,
 } from "@/features/webhooks/types/webhook.types";
 import type {
   CreateWebhookFormValues,
   UpdateWebhookFormValues,
 } from "@/features/webhooks/schemas/webhook.schemas";
 
-export interface DeliveryListParams {
-  page?: number;
-  limit?: number;
-  status?: "success" | "failed" | "pending";
-}
-
-export interface DeliveryListResponse {
-  deliveries: WebhookDelivery[];
-  total: number;
-  page: number;
-  limit: number;
+/** api-guide.md 5.12: POST .../rotate-secret returns { webhookId, secret, warning }. */
+export interface RotateSecretResponse {
+  webhookId: string;
+  secret: string;
+  warning: string;
 }
 
 export const webhooksApi = {
@@ -63,20 +57,20 @@ export const webhooksApi = {
   },
 
   rotateSecret(orgId: string, webhookId: string) {
-    return apiPost<WebhookSecretReveal>(
+    return apiPost<RotateSecretResponse>(
       buildWebhookPath(WEBHOOK_ROTATE_SECRET, { orgId, webhookId }),
     );
   },
 
-  deliveries(orgId: string, webhookId: string, params: DeliveryListParams) {
-    return apiGet<DeliveryListResponse>(
+  /** Bare array, no pagination — api-guide.md 5.12. */
+  deliveries(orgId: string, webhookId: string) {
+    return apiGet<WebhookDelivery[]>(
       buildWebhookPath(WEBHOOK_DELIVERY_LIST, { orgId, webhookId }),
-      { params },
     );
   },
 
   redeliver(orgId: string, webhookId: string, deliveryId: string) {
-    return apiPost<WebhookDelivery>(
+    return apiPost<RedeliverResponse>(
       buildWebhookPath(WEBHOOK_DELIVERY_REDELIVER, { orgId, webhookId, deliveryId }),
     );
   },

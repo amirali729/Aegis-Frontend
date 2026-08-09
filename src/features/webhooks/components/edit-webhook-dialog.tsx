@@ -32,24 +32,24 @@ import { getErrorMessage } from "@/shared/errors/get-error-message";
 import type { Webhook } from "@/features/webhooks/types/webhook.types";
 
 export function EditWebhookDialog({
-  applicationId,
+  orgId,
   webhook,
   open,
   onOpenChange,
 }: {
-  applicationId: string;
+  orgId: string;
   webhook: Webhook;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const updateWebhook = useUpdateWebhook(applicationId);
+  const updateWebhook = useUpdateWebhook(orgId);
 
   const form = useForm<UpdateWebhookFormValues>({
     resolver: zodResolver(updateWebhookSchema),
     defaultValues: {
       name: webhook.name,
-      endpointUrl: webhook.endpointUrl,
-      events: webhook.events,
+      url: webhook.url,
+      subscribedEvents: webhook.subscribedEvents,
     },
   });
 
@@ -59,8 +59,8 @@ export function EditWebhookDialog({
     if (open) {
       form.reset({
         name: webhook.name,
-        endpointUrl: webhook.endpointUrl,
-        events: webhook.events,
+        url: webhook.url,
+        subscribedEvents: webhook.subscribedEvents,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,7 +109,7 @@ export function EditWebhookDialog({
 
             <FormField
               control={form.control}
-              name="endpointUrl"
+              name="url"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Endpoint URL</FormLabel>
@@ -123,7 +123,7 @@ export function EditWebhookDialog({
 
             <FormField
               control={form.control}
-              name="events"
+              name="subscribedEvents"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Events</FormLabel>

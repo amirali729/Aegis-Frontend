@@ -1,10 +1,10 @@
 import type { LucideIcon } from "lucide-react";
-import { ArrowDown, ArrowUp, Grid2x2, ShieldCheck, Users2, XCircle } from "lucide-react";
+import { CheckCircle2, Link2, ShieldCheck, XCircle } from "lucide-react";
 
 import { Card } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
-import type { WebhookStats } from "@/features/webhooks/types/webhook.types";
+import type { ComputedWebhookStats } from "@/features/webhooks/types/webhook.types";
 
 const ICON_STYLES = {
   violet: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
@@ -13,43 +13,25 @@ const ICON_STYLES = {
   rose: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
 } as const;
 
-interface StatCardProps {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  color: keyof typeof ICON_STYLES;
-  deltaLabel?: string;
-  deltaDirection?: "up" | "down";
-  deltaGood?: boolean;
-}
-
 function StatCard({
   label,
   value,
+  caption,
   icon: Icon,
   color,
-  deltaLabel,
-  deltaDirection,
-  deltaGood = true,
-}: StatCardProps) {
-  const DeltaIcon = deltaDirection === "down" ? ArrowDown : ArrowUp;
-
+}: {
+  label: string;
+  value: string;
+  caption?: string;
+  icon: LucideIcon;
+  color: keyof typeof ICON_STYLES;
+}) {
   return (
     <Card className="flex-row items-start justify-between p-4">
       <div>
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="mt-1.5 text-2xl font-semibold tabular-nums">{value}</p>
-        {deltaLabel && (
-          <p
-            className={cn(
-              "mt-1 flex items-center gap-1 text-xs font-medium",
-              deltaGood ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
-            )}
-          >
-            <DeltaIcon className="size-3" />
-            {deltaLabel}
-          </p>
-        )}
+        {caption && <p className="mt-1 text-xs text-muted-foreground">{caption}</p>}
       </div>
       <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", ICON_STYLES[color])}>
         <Icon className="size-5" />
@@ -62,7 +44,7 @@ export function WebhookStatCards({
   stats,
   isLoading,
 }: {
-  stats: WebhookStats | undefined;
+  stats: ComputedWebhookStats | undefined;
   isLoading: boolean;
 }) {
   if (isLoading || !stats) {
@@ -79,40 +61,37 @@ export function WebhookStatCards({
     );
   }
 
+  const sampleCaption = `Based on last ${stats.sampledDeliveryCount} deliveries fetched`;
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
         label="Active Webhooks"
-        value={stats.activeWebhooks.toLocaleString()}
-        icon={Users2}
+        value={`${stats.activeWebhooks} / ${stats.totalWebhooks}`}
+        caption="Enabled / total configured"
+        icon={Link2}
         color="violet"
-        deltaLabel={stats.activeWebhooksDeltaLabel}
-        deltaDirection="up"
       />
       <StatCard
-        label="Events Delivered"
-        value={stats.eventsDelivered.toLocaleString()}
-        icon={Grid2x2}
+        label="Deliveries Sampled"
+        value={stats.sampledDeliveryCount.toLocaleString()}
+        caption="Most recent per webhook"
+        icon={CheckCircle2}
         color="emerald"
-        deltaLabel={`${stats.eventsDeliveredDeltaPct >= 0 ? "+" : ""}${stats.eventsDeliveredDeltaPct}% vs last 7 days`}
-        deltaDirection={stats.eventsDeliveredDeltaPct >= 0 ? "up" : "down"}
       />
       <StatCard
-        label="Delivery Success"
-        value={`${stats.deliverySuccessRate.toFixed(1)}%`}
+        label="Recent Success Rate"
+        value={stats.successRate === null ? "—" : `${stats.successRate.toFixed(1)}%`}
+        caption={sampleCaption}
         icon={ShieldCheck}
         color="blue"
-        deltaLabel={`${stats.deliverySuccessDeltaPct >= 0 ? "+" : ""}${stats.deliverySuccessDeltaPct}% vs last 7 days`}
-        deltaDirection={stats.deliverySuccessDeltaPct >= 0 ? "up" : "down"}
       />
       <StatCard
-        label="Delivery Failures"
-        value={stats.deliveryFailures.toLocaleString()}
+        label="Recent Failures"
+        value={stats.failedCount.toLocaleString()}
+        caption={sampleCaption}
         icon={XCircle}
         color="rose"
-        deltaLabel={`${stats.deliveryFailuresDeltaPct >= 0 ? "+" : ""}${stats.deliveryFailuresDeltaPct}% vs last 7 days`}
-        deltaDirection={stats.deliveryFailuresDeltaPct >= 0 ? "up" : "down"}
-        deltaGood={stats.deliveryFailuresDeltaPct <= 0}
       />
     </div>
   );

@@ -1,22 +1,16 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { AppWindow, ExternalLink } from "lucide-react";
+import { Building2, ExternalLink } from "lucide-react";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ROUTES } from "@/shared/config/routes";
-import { useApplications } from "@/features/applications/queries/use-applications";
-import { useWebhooks, useWebhookStats, useWebhookDeliveries } from "@/features/webhooks/queries/use-webhooks";
+import { useCurrentOrganization } from "@/features/settings/hooks/use-current-organization";
+import { useWebhooks, useRecentDeliveriesAcrossWebhooks } from "@/features/webhooks/queries/use-webhooks";
+import { computeWebhookStats } from "@/features/webhooks/lib/compute-webhook-stats";
 import { WebhookStatCards } from "@/features/webhooks/components/webhook-stat-cards";
 import { WebhooksTable } from "@/features/webhooks/components/webhooks-table";
 import { CreateWebhookDialog } from "@/features/webhooks/components/create-webhook-dialog";
@@ -41,44 +35,47 @@ const TABS: { value: WebhookTab; label: string }[] = [
 const BUILT_TABS: WebhookTab[] = ["webhooks", "deliveries"];
 
 function WebhooksTabContent({
-  applicationId,
+  orgId,
   onViewAllDeliveries,
 }: {
-  applicationId: string;
+  orgId: string;
   onViewAllDeliveries: () => void;
 }) {
-  const webhooksQuery = useWebhooks(applicationId);
-  const statsQuery = useWebhookStats(applicationId);
-  const recentDeliveriesQuery = useWebhookDeliveries(applicationId, { page: 1, limit: 5 });
+  const webhooksQuery = useWebhooks(orgId);
+  const webhooks = webhooksQuery.data ?? [];
+  const recent = useRecentDeliveriesAcrossWebhooks(orgId, webhooks);
+  const stats = webhooksQuery.isSuccess
+    ? computeWebhookStats(webhooks, recent.deliveries)
+    : undefined;
 
   return (
     <div className="flex flex-col gap-6">
-      <WebhookStatCards stats={statsQuery.data} isLoading={statsQuery.isLoading} />
+      <WebhookStatCards stats={stats} isLoading={webhooksQuery.isLoading || recent.isLoading} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="gap-0 py-0 xl:col-span-2">
           <div className="flex items-center justify-between border-b border-border px-4 py-4">
             <p className="font-semibold">Your Webhooks</p>
           </div>
-          <WebhooksTable applicationId={applicationId} />
-          {webhooksQuery.isSuccess && webhooksQuery.data.length > 0 && (
+          <WebhooksTable orgId={orgId} />
+          {webhooksQuery.isSuccess && webhooks.length > 0 && (
             <div className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
-              Showing 1 to {webhooksQuery.data.length} of {webhooksQuery.data.length} webhooks
+              Showing 1 to {webhooks.length} of {webhooks.length} webhooks
             </div>
           )}
         </Card>
 
         <RecentDeliveriesPanel
-          deliveries={recentDeliveriesQuery.data?.deliveries}
-          isLoading={recentDeliveriesQuery.isLoading}
-          isError={recentDeliveriesQuery.isError}
-          onRetry={() => recentDeliveriesQuery.refetch()}
+          deliveries={recent.deliveries.slice(0, 5)}
+          isLoading={recent.isLoading}
+          isError={recent.isError}
+          onRetry={recent.refetch}
           onViewAll={onViewAllDeliveries}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <EventOverviewChart topEvents={statsQuery.data?.topEvents} isLoading={statsQuery.isLoading} />
+        <EventOverviewChart topEvents={stats?.topEvents} isLoading={webhooksQuery.isLoading} />
         <div className="xl:col-span-2">
           <HowWebhooksWork />
         </div>
@@ -92,12 +89,10 @@ function WebhooksTabContent({
 }
 
 export default function WebhooksPage() {
-  const applicationsQuery = useApplications();
-  const [applicationId, setApplicationId] = useState<string | undefined>();
+  const { organization, isLoading: isOrgLoading } = useCurrentOrganization();
   const [tab, setTab] = useState<WebhookTab>("webhooks");
 
-  const applications = applicationsQuery.data ?? [];
-  const activeApplicationId = applicationId ?? applications[0]?.id;
+  const orgId = organization?.id;
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,45 +103,30 @@ export default function WebhooksPage() {
             <Badge variant="outline">Beta</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Receive real-time events from Aegis to your endpoints.
+            {organization
+              ? `Receive real-time events from Aegis to your endpoints, for ${organization.name}.`
+              : "Receive real-time events from Aegis to your endpoints."}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {applications.length > 1 && (
-            <Select value={activeApplicationId} onValueChange={(v) => v && setApplicationId(v)}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select application" />
-              </SelectTrigger>
-              <SelectContent>
-                {applications.map((app) => (
-                  <SelectItem key={app.id} value={app.id}>
-                    {app.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Button
-            variant="outline"
-            render={<Link to={ROUTES.developerApiReference} />}
-          >
+          <Button variant="outline" render={<Link to={ROUTES.developerApiReference} />}>
             Webhook Docs
             <ExternalLink />
           </Button>
-          {activeApplicationId && <CreateWebhookDialog applicationId={activeApplicationId} />}
+          {orgId && <CreateWebhookDialog orgId={orgId} />}
         </div>
       </div>
 
-      {applicationsQuery.isSuccess && applications.length === 0 && (
+      {!isOrgLoading && !orgId && (
         <EmptyState
-          icon={AppWindow}
-          title="Create an application first"
-          description="Webhooks are configured per application. Create one to get started."
+          icon={Building2}
+          title="No active organization"
+          description="Webhooks are configured per organization. Switch to or create one from the environment switcher to get started."
         />
       )}
 
-      {activeApplicationId && (
+      {orgId && (
         <>
           <Tabs value={tab} onValueChange={(v) => setTab(v as WebhookTab)}>
             <TabsList>
@@ -159,16 +139,13 @@ export default function WebhooksPage() {
           </Tabs>
 
           {tab === "webhooks" && (
-            <WebhooksTabContent
-              applicationId={activeApplicationId}
-              onViewAllDeliveries={() => setTab("deliveries")}
-            />
+            <WebhooksTabContent orgId={orgId} onViewAllDeliveries={() => setTab("deliveries")} />
           )}
 
           {tab === "deliveries" && (
             <Card>
               <CardContent className="pt-6">
-                <DeliveriesTab applicationId={activeApplicationId} />
+                <DeliveriesTab orgId={orgId} />
               </CardContent>
             </Card>
           )}
