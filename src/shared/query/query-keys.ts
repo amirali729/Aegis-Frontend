@@ -36,9 +36,23 @@ export const queryKeys = {
     list: (filters: object) => ["audit-logs", "list", filters] as const,
   },
   webhooks: {
-    list: (appId: string) => ["applications", appId, "webhooks", "list"] as const,
-    stats: (appId: string) => ["applications", appId, "webhooks", "stats"] as const,
-    deliveries: (appId: string, params: object) =>
-      ["applications", appId, "webhooks", "deliveries", params] as const,
+    list: (orgId: string) => ["organizations", orgId, "webhooks", "list"] as const,
+    deliveries: (orgId: string, webhookId: string) =>
+      ["organizations", orgId, "webhooks", webhookId, "deliveries"] as const,
+  },
+  admin: {
+    authMetrics: ["admin", "metrics", "auth"] as const,
+    oauthMetrics: ["admin", "metrics", "oauth"] as const,
+    applicationMetrics: ["admin", "metrics", "applications"] as const,
+    apiKeyMetrics: ["admin", "metrics", "api-keys"] as const,
+    webhookMetrics: ["admin", "metrics", "webhooks"] as const,
+    organizationMetrics: ["admin", "metrics", "organizations"] as const,
+    systemHealth: ["admin", "system-health"] as const,
+    systemSettings: ["admin", "system-settings"] as const,
+    organizations: ["admin", "organizations"] as const,
+    recentActivity: (filters: object) => ["admin", "recent-activity", filters] as const,
+    users: (filters: object) => ["admin", "users", filters] as const,
+    userDetail: (id: string) => ["admin", "users", id] as const,
+    userSessions: (userId: string) => ["admin", "users", userId, "sessions"] as const,
   },
 } as const;

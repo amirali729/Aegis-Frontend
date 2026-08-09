@@ -92,11 +92,15 @@ httpClient.interceptors.response.use(
     // /oauth/token, /oauth/revoke, /oauth/introspect are the three
     // documented exceptions to the standard {success, message, ...}
     // envelope — on failure they return RFC 6749-shaped
-    // {error, error_description} instead of {message}.
+    // {error, error_description} instead of {message}. Checked with
+    // `includes` rather than `startsWith` since these are called
+    // against the bare, unversioned origin (see oauthOrigin in
+    // o-auth.ts) — config.url for these calls is an absolute URL like
+    // "https://api.example.com/oauth/token", not a relative path.
     const isRawOAuthEndpoint = Boolean(
-      originalRequest?.url?.startsWith("/oauth/token") ||
-        originalRequest?.url?.startsWith("/oauth/revoke") ||
-        originalRequest?.url?.startsWith("/oauth/introspect"),
+      originalRequest?.url?.includes("/oauth/token") ||
+        originalRequest?.url?.includes("/oauth/revoke") ||
+        originalRequest?.url?.includes("/oauth/introspect"),
     );
     if (isRawOAuthEndpoint) {
       const oauthData = data as unknown as
