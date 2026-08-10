@@ -1,6 +1,7 @@
 import { ROUTES } from "@/shared/config/routes";
 import type { AuditLogEntry } from "@/features/audit-logs/types/audit-log.types";
 import type { Invitation } from "@/features/organizations/types/organization.types";
+import type { DeliveryWithWebhookName } from "@/features/webhooks/queries/use-webhooks";
 import type {
   Notification,
   NotificationSeverity,
@@ -92,15 +93,34 @@ export function invitationsToNotifications(
 }
 
 /**
- * Placeholder — there's no webhook delivery API on the frontend yet
- * (Webhook Management UI is a separate, not-yet-built feature). Once
- * that lands, swap this for a real query against its delivery-failures
- * endpoint. Kept here, clearly marked `isLive: false`, so the category
- * has something to show and the panel's layout/behavior can be built
- * and reviewed now.
+ * Real data — backed by `GET /organizations/:orgId/webhooks/:webhookId/deliveries`
+ * (aggregated across the org's webhooks by useRecentDeliveriesAcrossWebhooks,
+ * same hook the Webhooks feature's own dashboard panel uses). Surfaces
+ * only deliveries that are actually failing (`failed` or `dead_letter`),
+ * per the real 5-state status enum from api-guide.md 5.12.
  */
-export function placeholderWebhookNotifications(): Notification[] {
-  return [];
+export function webhookDeliveriesToNotifications(
+  deliveries: DeliveryWithWebhookName[],
+): Notification[] {
+  return deliveries
+    .filter((delivery) => delivery.status === "failed" || delivery.status === "dead_letter")
+    .map(
+      (delivery): Notification => ({
+        id: `webhook-delivery:${delivery.id}`,
+        category: "webhook",
+        severity: delivery.status === "dead_letter" ? "critical" : "warning",
+        title:
+          delivery.status === "dead_letter"
+            ? `Webhook delivery exhausted retries`
+            : `Webhook delivery failed`,
+        message: `${delivery.webhookName} · ${delivery.eventType}${
+          delivery.errorMessage ? ` — ${delivery.errorMessage}` : ""
+        }`,
+        createdAt: delivery.updatedAt,
+        href: ROUTES.developerWebhooks,
+        isLive: true,
+      }),
+    );
 }
 
 /** Placeholder system/product notices — local only, not from any API. */

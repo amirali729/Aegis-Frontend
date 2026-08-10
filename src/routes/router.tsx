@@ -109,6 +109,12 @@ const ChangelogDetailPage = lazy(
 );
 const AdminOverviewPage = lazy(() => import("@/features/admin/pages/admin-overview-page"));
 const AdminUsersPage = lazy(() => import("@/features/admin/pages/admin-users-page"));
+const AdminApplicationsPage = lazy(() => import("@/features/admin/pages/admin-applications-page"));
+const AdminApiKeysPage = lazy(() => import("@/features/admin/pages/admin-api-keys-page"));
+const AdminSessionsPage = lazy(() => import("@/features/admin/pages/admin-sessions-page"));
+const AdminSystemSettingsPage = lazy(
+  () => import("@/features/admin/pages/admin-system-settings-page"),
+);
 
 function withSuspense(element: React.ReactNode) {
   return (
@@ -333,6 +339,13 @@ export const router = createBrowserRouter([
                 children: [
                   { path: ROUTES.adminOverview, element: withSuspense(<AdminOverviewPage />) },
                   { path: ROUTES.adminUsers, element: withSuspense(<AdminUsersPage />) },
+                  { path: ROUTES.adminApplications, element: withSuspense(<AdminApplicationsPage />) },
+                  { path: ROUTES.adminApiKeys, element: withSuspense(<AdminApiKeysPage />) },
+                  { path: ROUTES.adminSessions, element: withSuspense(<AdminSessionsPage />) },
+                  {
+                    path: ROUTES.adminSystemSettings,
+                    element: withSuspense(<AdminSystemSettingsPage />),
+                  },
                   ...ADMIN_NAV_FLAT_ITEMS.filter((item) => !item.isBuilt).map((item) => ({
                     path: item.href,
                     element: <ComingSoonPage title={item.label} />,

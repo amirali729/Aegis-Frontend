@@ -50,10 +50,10 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         ],
       },
       { label: "Organizations", href: ROUTES.adminOrganizations, icon: Building2 },
-      { label: "Applications", href: ROUTES.adminApplications, icon: AppWindow },
+      { label: "Applications", href: ROUTES.adminApplications, icon: AppWindow, isBuilt: true },
       { label: "OAuth Clients", href: ROUTES.adminOAuthClients, icon: KeyRound },
-      { label: "API Keys", href: ROUTES.adminApiKeys, icon: KeyRound },
-      { label: "Sessions", href: ROUTES.adminSessions, icon: Monitor },
+      { label: "API Keys", href: ROUTES.adminApiKeys, icon: KeyRound, isBuilt: true },
+      { label: "Sessions", href: ROUTES.adminSessions, icon: Monitor, isBuilt: true },
       { label: "Audit Logs", href: ROUTES.adminAuditLogs, icon: ScrollText },
     ],
   },
@@ -74,7 +74,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     items: [
       { label: "Security", href: ROUTES.adminSecurity, icon: ShieldAlert },
-      { label: "System Settings", href: ROUTES.adminSystemSettings, icon: Settings },
+      { label: "System Settings", href: ROUTES.adminSystemSettings, icon: Settings, isBuilt: true },
     ],
   },
   {

@@ -5,11 +5,12 @@ import { useInvitations } from "@/features/organizations/queries/use-organizatio
 import { useCurrentOrganization } from "@/features/settings/hooks/use-current-organization";
 import { useNotificationPreferencesStore } from "@/features/settings/store/notification-preferences";
 import { useNotificationStore } from "@/features/notifications/store/notification-store";
+import { useWebhooks, useRecentDeliveriesAcrossWebhooks } from "@/features/webhooks/queries/use-webhooks";
 import {
   auditLogsToNotifications,
   invitationsToNotifications,
   placeholderSystemNotifications,
-  placeholderWebhookNotifications,
+  webhookDeliveriesToNotifications,
 } from "@/features/notifications/lib/build-notifications";
 import type { Notification } from "@/features/notifications/types/notification.types";
 
@@ -23,12 +24,13 @@ export interface NotificationFeedItem extends Notification {
  * Aggregates every notification source into one sorted feed.
  *
  * There is no dedicated `/notifications` endpoint on the backend yet, so
- * this composes real, already-available queries (recent audit log
+ * this composes real, already-available queries: recent audit log
  * entries filtered to security-relevant actions, pending invitations for
- * the active organization) with placeholder sources for categories that
- * don't have a data source in the frontend yet (webhook delivery
- * failures — pending the Webhook Management UI feature — and product/
- * system notices). Read state is tracked separately in
+ * the active organization, and failing webhook deliveries for the
+ * active organization's webhooks (reusing the same aggregation hook the
+ * Webhooks feature's own dashboard panel uses). Only "system" notices
+ * remain a placeholder — there's genuinely no product-announcements
+ * data source anywhere in the API. Read state is tracked separately in
  * `notification-store` since the underlying items are recomputed on
  * every load rather than persisted server-side.
  */
@@ -43,6 +45,11 @@ export function useNotificationFeed() {
     preferences.inAppAuditAlerts,
   );
   const invitationsQuery = useInvitations(organization?.id ?? "");
+  const webhooksQuery = useWebhooks(organization?.id ?? "");
+  const webhookDeliveries = useRecentDeliveriesAcrossWebhooks(
+    organization?.id ?? "",
+    webhooksQuery.data ?? [],
+  );
 
   const items = useMemo<NotificationFeedItem[]>(() => {
     const security = preferences.inAppAuditAlerts
@@ -52,7 +59,7 @@ export function useNotificationFeed() {
       invitationsQuery.data ?? [],
       organization?.name ?? null,
     );
-    const webhooks = placeholderWebhookNotifications();
+    const webhooks = webhookDeliveriesToNotifications(webhookDeliveries.deliveries);
     const system = placeholderSystemNotifications();
 
     const merged = [...security, ...invitations, ...webhooks, ...system]
@@ -66,6 +73,7 @@ export function useNotificationFeed() {
   }, [
     auditLogsQuery.data,
     invitationsQuery.data,
+    webhookDeliveries.deliveries,
     organization?.name,
     preferences.inAppAuditAlerts,
     dismissedIds,
@@ -78,17 +86,20 @@ export function useNotificationFeed() {
   // (e.g. no invitation:view permission for the active org) shouldn't
   // blank out notifications from the others. Only surface a blocking
   // error state if every live source failed.
-  const isError = auditLogsQuery.isError && invitationsQuery.isError;
+  const isError = auditLogsQuery.isError && invitationsQuery.isError && webhooksQuery.isError;
 
   return {
     items,
     unreadCount,
-    isLoading: isOrgLoading || auditLogsQuery.isLoading || invitationsQuery.isLoading,
+    isLoading:
+      isOrgLoading || auditLogsQuery.isLoading || invitationsQuery.isLoading || webhooksQuery.isLoading,
     isError,
-    error: auditLogsQuery.error ?? invitationsQuery.error,
+    error: auditLogsQuery.error ?? invitationsQuery.error ?? webhooksQuery.error,
     refetch: () => {
       auditLogsQuery.refetch();
       invitationsQuery.refetch();
+      webhooksQuery.refetch();
+      webhookDeliveries.refetch();
     },
   };
 }

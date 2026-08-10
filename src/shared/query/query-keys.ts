@@ -54,5 +54,7 @@ export const queryKeys = {
     users: (filters: object) => ["admin", "users", filters] as const,
     userDetail: (id: string) => ["admin", "users", id] as const,
     userSessions: (userId: string) => ["admin", "users", userId, "sessions"] as const,
+    applications: (filters: object) => ["admin", "applications", filters] as const,
+    apiKeys: (filters: object) => ["admin", "api-keys", filters] as const,
   },
 } as const;
