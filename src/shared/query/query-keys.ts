@@ -10,6 +10,18 @@ export const queryKeys = {
   sessions: {
     list: ["sessions", "list"] as const,
   },
+  settings: {
+    profile: ["settings", "profile"] as const,
+    preferences: ["settings", "preferences"] as const,
+    connectedApps: ["settings", "connected-apps"] as const,
+  },
+  dashboard: {
+    overview: ["dashboard", "overview"] as const,
+    activity: ["dashboard", "activity"] as const,
+    security: ["dashboard", "security"] as const,
+    resources: ["dashboard", "resources"] as const,
+    recentActivity: (limit?: number) => ["dashboard", "recent-activity", limit] as const,
+  },
   organizations: {
     list: ["organizations", "list"] as const,
     detail: (id: string) => ["organizations", "detail", id] as const,
