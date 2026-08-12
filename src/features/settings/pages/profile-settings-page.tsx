@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect, type ChangeEvent } from "react";
-import { Camera, Copy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Copy } from "lucide-react";
 
 import {
   Card,
@@ -14,9 +14,11 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { useFormattedDateTime } from "@/shared/timezone/format";
-import { useProfilePreferencesStore } from "@/features/settings/store/profile-preferences";
+import { useProfile } from "@/features/settings/queries/use-settings";
+import { useUpdateProfile } from "@/features/settings/mutations/use-settings-actions";
 import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard";
 import { toast } from "@/shared/lib/toast";
 import { SecurityOverviewCard } from "@/features/settings/components/security-overview-card";
@@ -32,48 +34,72 @@ function accountTypeFromPermissions(permissionCount: number) {
   return "Member";
 }
 
+interface FormState {
+  jobTitle: string;
+  bio: string;
+  avatarUrl: string;
+  company: string;
+  website: string;
+  location: string;
+}
+
+const EMPTY_FORM: FormState = {
+  jobTitle: "",
+  bio: "",
+  avatarUrl: "",
+  company: "",
+  website: "",
+  location: "",
+};
+
 export default function ProfileSettingsPage() {
   const user = useAuthStore((state) => state.user);
   const created = useFormattedDateTime(user?.createdAt);
   const { copy } = useCopyToClipboard();
 
-  const {
-    jobTitle,
-    bio,
-    avatarDataUrl,
-    setJobTitle,
-    setBio,
-    setAvatarDataUrl,
-  } = useProfilePreferencesStore();
+  const profileQuery = useProfile();
+  const updateProfile = useUpdateProfile();
 
-  const [jobTitleDraft, setJobTitleDraft] = useState(jobTitle);
-  const [bioDraft, setBioDraft] = useState(bio);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [dirty, setDirty] = useState(false);
 
-  useEffect(() => setJobTitleDraft(jobTitle), [jobTitle]);
-  useEffect(() => setBioDraft(bio), [bio]);
+  // Hydrate the draft from the server once it loads. Only re-syncs
+  // when we're not mid-edit, so a background refetch can't clobber
+  // what the user is typing.
+  useEffect(() => {
+    if (!profileQuery.data || dirty) return;
+    const p = profileQuery.data;
+    setForm({
+      jobTitle: p.jobTitle ?? "",
+      bio: p.bio ?? "",
+      avatarUrl: p.avatarUrl ?? "",
+      company: p.company ?? "",
+      website: p.website ?? "",
+      location: p.location ?? "",
+    });
+  }, [profileQuery.data, dirty]);
 
-  const dirty = jobTitleDraft !== jobTitle || bioDraft !== bio;
-
-  function handleSave() {
-    setJobTitle(jobTitleDraft);
-    setBio(bioDraft);
-    toast.success("Profile updated.");
+  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setDirty(true);
   }
 
-  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be 2MB or smaller.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => setAvatarDataUrl(reader.result as string);
-    reader.readAsDataURL(file);
+  function handleSave() {
+    updateProfile.mutate(
+      {
+        jobTitle: form.jobTitle || undefined,
+        bio: form.bio || undefined,
+        avatarUrl: form.avatarUrl || undefined,
+        company: form.company || undefined,
+        website: form.website || undefined,
+        location: form.location || undefined,
+      },
+      { onSuccess: () => setDirty(false) },
+    );
   }
 
   const accountType = accountTypeFromPermissions(user?.permissions.length ?? 0);
+  const isLoading = profileQuery.isLoading;
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -88,87 +114,120 @@ export default function ProfileSettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Avatar className="size-16">
-                  {avatarDataUrl && <AvatarImage src={avatarDataUrl} alt={user?.username} />}
-                  <AvatarFallback className="text-lg">
-                    {user ? initials(user.username) : "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
-                  aria-label="Change photo"
-                >
-                  <Camera className="size-3.5" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/gif"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
+            {isLoading ? (
+              <div className="flex flex-col gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <Skeleton className="h-24 w-full" />
               </div>
-              <div>
-                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                  Upload New Photo
-                </Button>
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  JPG, PNG or GIF. Max size of 2MB.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5">
-                <Label>Username</Label>
-                <Input readOnly value={user?.username ?? ""} />
-                <p className="text-xs text-muted-foreground">
-                  Contact an administrator to change your username.
-                </p>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Email Address</Label>
-                <Input readOnly value={user?.email ?? ""} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="jobTitle">Job Title</Label>
-                <Input
-                  id="jobTitle"
-                  placeholder="e.g. Platform Engineer"
-                  value={jobTitleDraft}
-                  onChange={(e) => setJobTitleDraft(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Member since</Label>
-                <Input readOnly value={user ? created.date : ""} />
-              </div>
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                maxLength={160}
-                rows={3}
-                placeholder="Tell us a little about yourself."
-                value={bioDraft}
-                onChange={(e) => setBioDraft(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {bioDraft.length}/160 characters.
+            ) : profileQuery.isError ? (
+              <p className="text-sm text-destructive">
+                Couldn&apos;t load your profile. Try refreshing the page.
               </p>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-4">
+                  <Avatar className="size-16">
+                    {form.avatarUrl && (
+                      <AvatarImage src={form.avatarUrl} alt={user?.username} />
+                    )}
+                    <AvatarFallback className="text-lg">
+                      {user ? initials(user.username) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 gap-1.5">
+                    <Label htmlFor="avatarUrl">Avatar URL</Label>
+                    <Input
+                      id="avatarUrl"
+                      placeholder="https://example.com/avatar.png"
+                      value={form.avatarUrl}
+                      onChange={(e) => setField("avatarUrl", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Link to an image — direct file upload isn&apos;t
+                      supported by the backend yet, only a URL.
+                    </p>
+                  </div>
+                </div>
 
-            <div>
-              <Button onClick={handleSave} disabled={!dirty}>
-                Save Changes
-              </Button>
-            </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <Label>Username</Label>
+                    <Input readOnly value={user?.username ?? ""} />
+                    <p className="text-xs text-muted-foreground">
+                      Contact an administrator to change your username.
+                    </p>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Email Address</Label>
+                    <Input readOnly value={user?.email ?? ""} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="jobTitle">Job Title</Label>
+                    <Input
+                      id="jobTitle"
+                      placeholder="e.g. Platform Engineer"
+                      value={form.jobTitle}
+                      onChange={(e) => setField("jobTitle", e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      placeholder="e.g. Acme Inc."
+                      value={form.company}
+                      onChange={(e) => setField("company", e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      placeholder="https://example.com"
+                      value={form.website}
+                      onChange={(e) => setField("website", e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      placeholder="e.g. Karachi, Pakistan"
+                      value={form.location}
+                      onChange={(e) => setField("location", e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <Label>Member since</Label>
+                    <Input readOnly value={user ? created.date : ""} />
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    maxLength={500}
+                    rows={3}
+                    placeholder="Tell us a little about yourself."
+                    value={form.bio}
+                    onChange={(e) => setField("bio", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {form.bio.length}/500 characters.
+                  </p>
+                </div>
+
+                <div>
+                  <Button
+                    onClick={handleSave}
+                    disabled={!dirty || updateProfile.isPending}
+                  >
+                    {updateProfile.isPending ? "Saving…" : "Save Changes"}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -187,7 +246,10 @@ export default function ProfileSettingsPage() {
                 {user && (
                   <button
                     type="button"
-                    onClick={() => copy(user.id)}
+                    onClick={() => {
+                      copy(user.id);
+                      toast.success("Copied.");
+                    }}
                     aria-label="Copy user ID"
                     className="text-muted-foreground hover:text-foreground"
                   >

@@ -1,10 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/**
+ * `emailSecurityAlerts`/`emailProductUpdates`/`emailWeeklyDigest` moved
+ * to real backend state (`preferences.notifications` via GET/PATCH
+ * /settings/preferences) — see `notifications-settings-page.tsx`.
+ * What's left has no backend field to sync to.
+ */
 interface NotificationPreferencesState {
-  emailSecurityAlerts: boolean;
-  emailProductUpdates: boolean;
-  emailWeeklyDigest: boolean;
   emailInvitations: boolean;
   inAppMentions: boolean;
   inAppAuditAlerts: boolean;
@@ -15,9 +18,6 @@ export const useNotificationPreferencesStore =
   create<NotificationPreferencesState>()(
     persist(
       (set) => ({
-        emailSecurityAlerts: true,
-        emailProductUpdates: false,
-        emailWeeklyDigest: true,
         emailInvitations: true,
         inAppMentions: true,
         inAppAuditAlerts: true,

@@ -25,6 +25,9 @@ import { useRoles } from "@/features/roles/queries/use-roles";
 import { useDeleteRole } from "@/features/roles/mutations/use-role-actions";
 import { CreateRoleDialog } from "@/features/roles/components/create-role-dialog";
 import { EditRoleDialog } from "@/features/roles/components/edit-role-dialog";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import { can } from "@/shared/permissions/can";
+import { ROLE_VIEW_PERMISSION } from "@/shared/permissions/route-permissions";
 import type { Role } from "@/features/roles/types/role.types";
 
 function RoleTableRow({
@@ -79,7 +82,8 @@ function RoleTableRow({
 }
 
 export default function RolesPage() {
-  const rolesQuery = useRoles();
+  const user = useAuthStore((state) => state.user);
+  const rolesQuery = useRoles(can(user, ROLE_VIEW_PERMISSION));
   const deleteRole = useDeleteRole();
 
   return (

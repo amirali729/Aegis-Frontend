@@ -14,9 +14,13 @@ import { useOrganizations } from "@/features/organizations/queries/use-organizat
 import { useDeleteOrganization } from "@/features/organizations/mutations/use-organization-actions";
 import { CreateOrganizationDialog } from "@/features/organizations/components/create-organization-dialog";
 import { OrganizationRow } from "@/features/organizations/components/organization-row";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import { can } from "@/shared/permissions/can";
+import { ORGANIZATION_VIEW_PERMISSION } from "@/shared/permissions/route-permissions";
 
 export default function OrganizationsPage() {
-  const organizationsQuery = useOrganizations();
+  const user = useAuthStore((state) => state.user);
+  const organizationsQuery = useOrganizations(can(user, ORGANIZATION_VIEW_PERMISSION));
   const deleteOrganization = useDeleteOrganization();
 
   return (

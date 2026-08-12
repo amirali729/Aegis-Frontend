@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 import {
   AppWindow,
   Building2,
@@ -21,19 +22,25 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { can } from "@/shared/permissions/can";
 import { useApplications } from "@/features/applications/queries/use-applications";
-import { useOrganizations, useMembers, useInvitations } from "@/features/organizations/queries/use-organizations";
-import { useSessions } from "@/features/sessions/queries/use-sessions";
-import { useRoles } from "@/features/roles/queries/use-roles";
-import { useDashboardActivity } from "@/features/dashboard/hooks/use-dashboard-activity";
+import { useMembers, useInvitations } from "@/features/organizations/queries/use-organizations";
+import {
+  useDashboardOverview,
+  useDashboardActivity,
+  useDashboardSecurity,
+  useDashboardResources,
+  useDashboardRecentActivity,
+} from "@/features/dashboard/queries/use-dashboard";
 import { useCurrentOrganization } from "@/features/settings/hooks/use-current-organization";
 import { StatCard } from "@/features/dashboard/components/stat-card";
 import { ActivityChart } from "@/features/dashboard/components/activity-chart";
-import { OutcomeDonut } from "@/features/dashboard/components/outcome-donut";
+import { TopActionsList } from "@/features/dashboard/components/top-actions-list";
 import { MembersStatusDonut } from "@/features/dashboard/components/members-status-donut";
 import { ApplicationsList } from "@/features/dashboard/components/applications-list";
 import { RecentActivityList } from "@/features/dashboard/components/recent-activity-list";
 import { SystemStatusCard } from "@/features/settings/components/system-status-card";
 import { ROUTES } from "@/shared/config/routes";
+
+const RECENT_ACTIVITY_LIMIT = 6;
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -44,10 +51,16 @@ export default function DashboardPage() {
   const canViewAudit = can(user, "audit:view");
 
   const applicationsQuery = useApplications(canViewApplications);
-  const organizationsQuery = useOrganizations(canViewOrganizations);
-  const sessionsQuery = useSessions();
-  const rolesQuery = useRoles(canViewRoles);
-  const activity = useDashboardActivity(canViewAudit);
+
+  // /dashboard/* is self-scoped on the backend (verifyjwt + resolveTenant
+  // only, no permission gate) — every caller gets real numbers back,
+  // narrowed to their own account when no organization is active. No
+  // `enabled` flag needed here, unlike the feature-specific queries above.
+  const overview = useDashboardOverview();
+  const resources = useDashboardResources();
+  const security = useDashboardSecurity();
+  const activity = useDashboardActivity();
+  const recentActivity = useDashboardRecentActivity(RECENT_ACTIVITY_LIMIT);
 
   const { organization } = useCurrentOrganization();
   const canViewMembers = can(user, "member:view");
@@ -62,7 +75,7 @@ export default function DashboardPage() {
       key: "applications",
       visible: canViewApplications,
       label: "Applications",
-      value: applicationsQuery.data?.length,
+      value: resources.data?.applications,
       icon: AppWindow,
       color: "violet" as const,
     },
@@ -70,7 +83,7 @@ export default function DashboardPage() {
       key: "organizations",
       visible: canViewOrganizations,
       label: "Organizations",
-      value: organizationsQuery.data?.length,
+      value: resources.data?.organizations,
       icon: Building2,
       color: "blue" as const,
     },
@@ -78,7 +91,7 @@ export default function DashboardPage() {
       key: "sessions",
       visible: true,
       label: "Active Sessions",
-      value: sessionsQuery.data?.length,
+      value: security.data?.activeSessionsCount,
       icon: Monitor,
       color: "emerald" as const,
     },
@@ -86,15 +99,15 @@ export default function DashboardPage() {
       key: "roles",
       visible: canViewRoles,
       label: "Roles",
-      value: rolesQuery.data?.length,
+      value: resources.data?.roles,
       icon: ShieldCheck,
       color: "amber" as const,
     },
     {
       key: "auditLogs",
       visible: canViewAudit,
-      label: "Audit Logs",
-      value: activity.total,
+      label: "Events (30d)",
+      value: activity.data?.totalLast30Days,
       icon: ScrollText,
       color: "violet" as const,
     },
@@ -125,6 +138,17 @@ export default function DashboardPage() {
   const showMembersWidget = canViewMembers && Boolean(organization);
   const showApplicationsWidget = canViewApplications;
 
+  const chartData = (activity.data?.dailyCounts ?? []).map((d) => ({
+    label: format(new Date(d.date), "MMM d"),
+    count: d.count,
+  }));
+
+  const activityScopeLabel = activity.data?.scopedToSelf
+    ? "your account"
+    : organization?.name
+      ? organization.name
+      : "your workspace";
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -150,41 +174,46 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {canViewAudit && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Activity overview</CardTitle>
-              <CardDescription>Audit log events over the last 7 days.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activity.isPending && <Skeleton className="h-[220px] w-full" />}
-              {activity.isError && (
-                <ErrorState error={activity.error} onRetry={activity.refetch} />
-              )}
-              {!activity.isPending && !activity.isError && (
-                <ActivityChart data={activity.dailyActivity} />
-              )}
-            </CardContent>
-          </Card>
+      {/*
+        Unlike the old client-side derivation (which required
+        audit:view because it read /audit-logs directly), /dashboard/
+        activity and /dashboard/recent-activity are self-scoped on the
+        backend and fall back to the caller's own actions when they
+        can't see the whole organization — so these are shown to every
+        signed-in user, not just audit:view holders.
+      */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Activity overview</CardTitle>
+            <CardDescription>
+              Events for {activityScopeLabel} over the last 7 days.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {activity.isPending && <Skeleton className="h-[220px] w-full" />}
+            {activity.isError && (
+              <ErrorState error={activity.error} onRetry={() => activity.refetch()} />
+            )}
+            {!activity.isPending && !activity.isError && (
+              <ActivityChart data={chartData} />
+            )}
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Event outcomes</CardTitle>
-              <CardDescription>Success vs. failure, most recent events.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activity.isPending && <Skeleton className="h-[140px] w-full" />}
-              {!activity.isPending && !activity.isError && (
-                <OutcomeDonut
-                  data={activity.outcomeBreakdown}
-                  total={activity.totalEvents}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top actions</CardTitle>
+            <CardDescription>Most frequent events, last 30 days.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {activity.isPending && <Skeleton className="h-[140px] w-full" />}
+            {!activity.isPending && !activity.isError && (
+              <TopActionsList actions={activity.data?.topActions ?? []} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {(showMembersWidget || showApplicationsWidget) && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -249,13 +278,15 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {canViewAudit && (
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle>Recent activity</CardTitle>
-                <CardDescription>The latest events across your workspace.</CardDescription>
-              </div>
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>Recent activity</CardTitle>
+              <CardDescription>
+                The latest events for {activityScopeLabel}.
+              </CardDescription>
+            </div>
+            {canViewAudit && (
               <Link
                 to={ROUTES.auditLogs}
                 className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
@@ -263,23 +294,26 @@ export default function DashboardPage() {
                 View all
                 <ArrowRight className="size-3.5" />
               </Link>
-            </CardHeader>
-            <CardContent>
-              {activity.isPending && (
-                <div className="flex flex-col gap-3">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              )}
-              {!activity.isPending && !activity.isError && (
-                <RecentActivityList entries={activity.recentLogs} />
-              )}
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardHeader>
+          <CardContent>
+            {recentActivity.isPending && (
+              <div className="flex flex-col gap-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            )}
+            {recentActivity.isError && (
+              <ErrorState error={recentActivity.error} onRetry={() => recentActivity.refetch()} />
+            )}
+            {!recentActivity.isPending && !recentActivity.isError && (
+              <RecentActivityList entries={recentActivity.data?.items ?? []} />
+            )}
+          </CardContent>
+        </Card>
 
-        <div className={"flex flex-col gap-4 " + (canViewAudit ? "" : "lg:col-span-3")}>
+        <div className="flex flex-col gap-4">
           {QUICK_LINKS.length > 0 && (
             <Card>
               <CardHeader>
@@ -306,18 +340,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {STATS.length === 0 && !canViewAudit && !showMembersWidget && !showApplicationsWidget && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-            <Users className="size-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Your account doesn&apos;t have visibility into any workspace
-              metrics yet — ask an administrator to grant a few view
-              permissions.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {STATS.length === 0 &&
+        !showMembersWidget &&
+        !showApplicationsWidget &&
+        !overview.data && (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+              <Users className="size-6 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Your account doesn&apos;t have visibility into any workspace
+                metrics yet — ask an administrator to grant a few view
+                permissions.
+              </p>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }

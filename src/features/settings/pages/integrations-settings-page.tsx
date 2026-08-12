@@ -1,4 +1,4 @@
-import { Slack, Github, Webhook, BarChart3, Mail, Zap } from "lucide-react";
+import { Slack, Github, Webhook, BarChart3, Mail, Zap, Link2Off } from "lucide-react";
 
 import {
   Card,
@@ -8,7 +8,14 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { EmptyState } from "@/shared/components/empty-state";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
+import { useFormattedDateTime } from "@/shared/timezone/format";
 import { toast } from "@/shared/lib/toast";
+import { useConnectedApps } from "@/features/settings/queries/use-settings";
+import { useDisconnectApp } from "@/features/settings/mutations/use-settings-actions";
+import type { ConnectedApp } from "@/features/settings/types/settings.types";
 
 const INTEGRATIONS = [
   { icon: Slack, name: "Slack", description: "Get alerts in a Slack channel." },
@@ -19,9 +26,74 @@ const INTEGRATIONS = [
   { icon: Zap, name: "Zapier", description: "Automate workflows across your stack." },
 ];
 
+function ConnectedAccountRow({ app }: { app: ConnectedApp }) {
+  const disconnect = useDisconnectApp();
+  const connected = useFormattedDateTime(app.connectedAt);
+
+  return (
+    <div className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+      <div>
+        <p className="text-sm font-medium capitalize">{app.provider}</p>
+        <p className="text-xs text-muted-foreground">
+          Connected {connected.date} · {app.scopes.join(", ") || "no scopes"}
+        </p>
+      </div>
+      <ConfirmDialog
+        trigger={
+          <Button variant="outline" size="sm">
+            <Link2Off className="size-3.5" />
+            Disconnect
+          </Button>
+        }
+        title={`Disconnect ${app.provider}?`}
+        description={`Aegis will no longer have access to your ${app.provider} account.`}
+        confirmLabel="Disconnect"
+        isPending={disconnect.isPending}
+        onConfirm={() => disconnect.mutate(app.provider)}
+      />
+    </div>
+  );
+}
+
 export default function IntegrationsSettingsPage() {
+  const connectedAppsQuery = useConnectedApps();
+  const apps = connectedAppsQuery.data ?? [];
+
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Connected Accounts</CardTitle>
+          <CardDescription>
+            Third-party accounts linked to your Aegis account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {connectedAppsQuery.isLoading ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : connectedAppsQuery.isError ? (
+            <p className="text-sm text-destructive">
+              Couldn&apos;t load connected accounts. Try refreshing the page.
+            </p>
+          ) : apps.length === 0 ? (
+            <EmptyState
+              icon={Link2Off}
+              title="No connected accounts"
+              description="You haven't linked any third-party accounts yet."
+            />
+          ) : (
+            <div className="flex flex-col divide-y divide-border">
+              {apps.map((app) => (
+                <ConnectedAccountRow key={app.id} app={app} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Integrations</CardTitle>

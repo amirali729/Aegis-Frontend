@@ -11,7 +11,11 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Switch } from "@/shared/components/ui/switch";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { ROUTES } from "@/shared/config/routes";
+import { usePreferences } from "@/features/settings/queries/use-settings";
+import { useUpdatePreferences } from "@/features/settings/mutations/use-settings-actions";
+import type { DeveloperPreferences } from "@/features/settings/types/settings.types";
 
 interface DevPreferencesState {
   showFullTokensInUi: boolean;
@@ -39,6 +43,14 @@ const LINKS = [
 export default function DeveloperSettingsPage() {
   const prefs = useDevPreferencesStore();
 
+  const preferencesQuery = usePreferences();
+  const updatePreferences = useUpdatePreferences();
+  const developer = preferencesQuery.data?.developer;
+
+  function persist(patch: Partial<DeveloperPreferences>) {
+    updatePreferences.mutate({ developer: patch });
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
@@ -65,8 +77,65 @@ export default function DeveloperSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Preferences</CardTitle>
-          <CardDescription>Tune the developer experience for this device.</CardDescription>
+          <CardTitle>Developer Account Settings</CardTitle>
+          <CardDescription>Synced to your account.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col divide-y divide-border">
+          {preferencesQuery.isLoading || !developer ? (
+            <div className="flex flex-col gap-3 py-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4 py-3 first:pt-0">
+                <div>
+                  <p className="text-sm font-medium">API access</p>
+                  <p className="text-xs text-muted-foreground">
+                    Allow this account to create applications and API keys.
+                  </p>
+                </div>
+                <Switch
+                  checked={developer.apiAccessEnabled}
+                  onCheckedChange={(checked) => persist({ apiAccessEnabled: checked })}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">Beta features</p>
+                  <p className="text-xs text-muted-foreground">
+                    Opt into features that are still being tested.
+                  </p>
+                </div>
+                <Switch
+                  checked={developer.betaFeaturesEnabled}
+                  onCheckedChange={(checked) => persist({ betaFeaturesEnabled: checked })}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 py-3 last:pb-0">
+                <div>
+                  <p className="text-sm font-medium">Show developer tools</p>
+                  <p className="text-xs text-muted-foreground">
+                    Surface request IDs and raw responses across the app.
+                  </p>
+                </div>
+                <Switch
+                  checked={developer.showDeveloperTools}
+                  onCheckedChange={(checked) => persist({ showDeveloperTools: checked })}
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Device Preferences</CardTitle>
+          <CardDescription>
+            These aren&apos;t part of the backend&apos;s developer
+            preferences — saved to this device only.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col divide-y divide-border">
           <div className="flex items-center justify-between gap-4 py-3 first:pt-0">

@@ -27,6 +27,8 @@ import {
   SUPPORTED_TIMEZONES,
 } from "@/shared/constants/localization";
 import { usePreferencesStore } from "@/shared/timezone/preferences";
+import { usePreferences } from "@/features/settings/queries/use-settings";
+import { useUpdatePreferences } from "@/features/settings/mutations/use-settings-actions";
 import { useCurrentOrganization } from "@/features/settings/hooks/use-current-organization";
 import { useUpdateOrganization } from "@/features/organizations/mutations/use-organization-actions";
 import { usePlatformPreferencesStore } from "@/features/settings/store/platform-preferences";
@@ -44,11 +46,31 @@ export default function GeneralSettingsPage() {
     usePreferencesStore();
   const platform = usePlatformPreferencesStore();
 
+  const preferencesQuery = usePreferences();
+  const updatePreferences = useUpdatePreferences();
+
   const [nameDraft, setNameDraft] = useState(organization?.name ?? "");
 
   useEffect(() => {
     setNameDraft(organization?.name ?? "");
   }, [organization?.name]);
+
+  // GET /settings/preferences is the source of truth for these three —
+  // hydrate the local store from it once on load so other places in the
+  // app (e.g. useFormattedDateTime) reflect what's actually saved server-side.
+  useEffect(() => {
+    if (!preferencesQuery.data) return;
+    const g = preferencesQuery.data.general;
+    if (g.timezone) setTimezone(g.timezone);
+    if (g.locale) setLocale(g.locale);
+    if (g.dateFormat) setDateFormat(g.dateFormat);
+    // Only run when fresh data arrives, not on every local store change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferencesQuery.data]);
+
+  function persistGeneral(patch: Partial<{ timezone: string; locale: string; dateFormat: string }>) {
+    updatePreferences.mutate({ general: patch });
+  }
 
   function handleSaveOrganization() {
     if (!organization) return;
@@ -117,7 +139,14 @@ export default function GeneralSettingsPage() {
                 </div>
                 <div className="grid gap-1.5">
                   <Label>Default Timezone</Label>
-                  <Select value={timezone} onValueChange={(v) => v && setTimezone(v)}>
+                  <Select
+                    value={timezone}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      setTimezone(v);
+                      persistGeneral({ timezone: v });
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -132,7 +161,14 @@ export default function GeneralSettingsPage() {
                 </div>
                 <div className="grid gap-1.5">
                   <Label>Language</Label>
-                  <Select value={locale} onValueChange={(v) => v && setLocale(v)}>
+                  <Select
+                    value={locale}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      setLocale(v);
+                      persistGeneral({ locale: v });
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -147,7 +183,14 @@ export default function GeneralSettingsPage() {
                 </div>
                 <div className="grid gap-1.5 sm:col-span-2">
                   <Label>Date Format</Label>
-                  <Select value={dateFormat} onValueChange={(v) => v && setDateFormat(v)}>
+                  <Select
+                    value={dateFormat}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      setDateFormat(v);
+                      persistGeneral({ dateFormat: v });
+                    }}
+                  >
                     <SelectTrigger className="sm:max-w-xs">
                       <SelectValue />
                     </SelectTrigger>

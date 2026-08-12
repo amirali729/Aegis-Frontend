@@ -26,6 +26,9 @@ import { usePermissions } from "@/features/permissions/queries/use-permissions";
 import { useDeletePermission } from "@/features/permissions/mutations/use-permission-actions";
 import { CreatePermissionDialog } from "@/features/permissions/components/create-permission-dialog";
 import { EditPermissionDialog } from "@/features/permissions/components/edit-permission-dialog";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import { can } from "@/shared/permissions/can";
+import { PERMISSION_VIEW_PERMISSION } from "@/shared/permissions/route-permissions";
 import type { Permission } from "@/features/permissions/types/permission.types";
 
 const ACTION_VARIANT: Record<string, "success" | "blue" | "amber" | "destructive"> = {
@@ -102,7 +105,8 @@ function PermissionTableRow({
 }
 
 export default function PermissionsPage() {
-  const permissionsQuery = usePermissions();
+  const user = useAuthStore((state) => state.user);
+  const permissionsQuery = usePermissions(can(user, PERMISSION_VIEW_PERMISSION));
   const deletePermission = useDeletePermission();
 
   return (

@@ -5,6 +5,12 @@ import type {
   UpdateRoleFormValues,
 } from "@/features/roles/schemas/role.schemas";
 
+export interface AssignRoleResult {
+  userId: string;
+  roles: string[];
+  message: string;
+}
+
 export const rolesApi = {
   list() {
     return apiGet<Role[]>("/roles");
@@ -24,5 +30,18 @@ export const rolesApi = {
 
   remove(id: string) {
     return apiDelete<{ message: string }>(`/roles/${id}`);
+  },
+
+  assignToUser(orgId: string, userId: string, roleId: string) {
+    return apiPost<AssignRoleResult>(
+      `/organizations/${orgId}/users/${userId}/roles`,
+      { roleId },
+    );
+  },
+
+  removeFromUser(orgId: string, userId: string, roleId: string) {
+    return apiDelete<AssignRoleResult>(
+      `/organizations/${orgId}/users/${userId}/roles/${roleId}`,
+    );
   },
 };

@@ -15,6 +15,12 @@ import ForbiddenPage from "@/routes/forbidden-page";
 import { PLATFORM_ADMIN_PERMISSION } from "@/features/admin/constants/admin-permissions";
 import { AdminLayout } from "@/features/admin/layout/admin-layout";
 import { ADMIN_NAV_FLAT_ITEMS } from "@/features/admin/layout/admin-nav-items";
+import {
+  ROLE_VIEW_PERMISSION,
+  PERMISSION_VIEW_PERMISSION,
+  ORGANIZATION_VIEW_PERMISSION,
+  AUDIT_VIEW_PERMISSION,
+} from "@/shared/permissions/route-permissions";
 
 const LoginPage = lazy(() => import("@/features/auth/pages/login-page"));
 const LandingPage = lazy(() => import("@/features/landing/pages/landing-page"));
@@ -203,26 +209,42 @@ export const router = createBrowserRouter([
                 path: "applications/:id",
                 element: withSuspense(<ApplicationDetailsPage />),
               },
-              { path: ROUTES.roles, element: withSuspense(<RolesPage />) },
               {
-                path: ROUTES.permissions,
-                element: withSuspense(<PermissionsPage />),
+                element: <PermissionRoute permission={ROLE_VIEW_PERMISSION} />,
+                children: [{ path: ROUTES.roles, element: withSuspense(<RolesPage />) }],
               },
               {
-                path: ROUTES.organizations,
-                element: withSuspense(<OrganizationsPage />),
+                element: <PermissionRoute permission={PERMISSION_VIEW_PERMISSION} />,
+                children: [
+                  { path: ROUTES.permissions, element: withSuspense(<PermissionsPage />) },
+                ],
               },
               {
-                path: "organizations/:id",
-                element: withSuspense(<OrganizationDetailsPage />),
+                element: <PermissionRoute permission={ORGANIZATION_VIEW_PERMISSION} />,
+                children: [
+                  {
+                    path: ROUTES.organizations,
+                    element: withSuspense(<OrganizationsPage />),
+                  },
+                  {
+                    path: "organizations/:id",
+                    element: withSuspense(<OrganizationDetailsPage />),
+                  },
+                ],
               },
               {
+                // Self-scoped on the backend (SessionController.list
+                // calls listByUser with the caller's own id, no
+                // permission check) — matches nav-items.ts having no
+                // `permission` field here. Auth-only is correct.
                 path: ROUTES.sessions,
                 element: withSuspense(<SessionsPage />),
               },
               {
-                path: ROUTES.auditLogs,
-                element: withSuspense(<AuditLogsPage />),
+                element: <PermissionRoute permission={AUDIT_VIEW_PERMISSION} />,
+                children: [
+                  { path: ROUTES.auditLogs, element: withSuspense(<AuditLogsPage />) },
+                ],
               },
               {
                 path: ROUTES.notifications,

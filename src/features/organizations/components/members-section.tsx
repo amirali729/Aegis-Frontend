@@ -6,6 +6,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
 import { ConfirmDialog } from "@/shared/components/confirm-dialog";
+import { ManageRolesDialog } from "@/features/organizations/components/manage-roles-dialog";
 import { useFormattedDateTime } from "@/shared/timezone/format";
 import { useMembers } from "@/features/organizations/queries/use-organizations";
 import {
@@ -47,6 +48,8 @@ function MemberRow({
       </div>
 
       <div className="flex items-center gap-2">
+        <ManageRolesDialog member={member} orgId={orgId} />
+
         {member.status === "active" ? (
           <Button
             variant="outline"

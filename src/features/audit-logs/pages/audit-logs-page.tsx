@@ -16,17 +16,21 @@ import { ErrorState } from "@/shared/components/error-state";
 import { Pagination } from "@/shared/table/pagination";
 import { useAuditLogs } from "@/features/audit-logs/queries/use-audit-logs";
 import { AuditLogRow } from "@/features/audit-logs/components/audit-log-row";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import { can } from "@/shared/permissions/can";
+import { AUDIT_VIEW_PERMISSION } from "@/shared/permissions/route-permissions";
 import type { AuditLogFilters } from "@/features/audit-logs/types/audit-log.types";
 
 const PAGE_SIZE = 50;
 
 export default function AuditLogsPage() {
+  const user = useAuthStore((state) => state.user);
   const [filters, setFilters] = useState<AuditLogFilters>({
     page: 1,
     limit: PAGE_SIZE,
   });
 
-  const auditLogsQuery = useAuditLogs(filters);
+  const auditLogsQuery = useAuditLogs(filters, can(user, AUDIT_VIEW_PERMISSION));
 
   function updateFilter(patch: Partial<AuditLogFilters>) {
     setFilters((prev) => ({ ...prev, ...patch, page: 1 }));
