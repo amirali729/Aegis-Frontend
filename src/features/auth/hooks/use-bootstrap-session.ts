@@ -35,6 +35,10 @@ export function useBootstrapSession() {
       return;
     }
     if (query.data) {
+      console.debug("AUTH BOOTSTRAP /auth/me response", {
+        user: query.data.user,
+        permissions: query.data.permissions,
+      });
       setAuthenticated({ ...query.data.user, permissions: query.data.permissions });
     }
     if (query.isError) {

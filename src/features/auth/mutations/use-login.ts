@@ -11,6 +11,10 @@ export function useLogin() {
   return useMutation({
     mutationFn: (values: LoginFormValues) => authApi.login(values),
     onSuccess: (data) => {
+      console.debug("AUTH LOGIN /auth/login response", {
+        user: data.user,
+        permissions: data.permissions,
+      });
       setAuthenticated({ ...data.user, permissions: data.permissions });
       queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
